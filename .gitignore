@@ -2,6 +2,8 @@ ray
 *~
 .DS_Store
 *.o
+lex.yy.c
+y.tab.*
 *.dSYM
 RCS/*
 tmp/*

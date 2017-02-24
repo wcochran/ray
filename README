@@ -26,6 +26,7 @@ Running:
 Main files in archive:
 
 README ............... this file
+LICENSE.txt .......... License
 Makefile ............. builds program 'ray'
 ray.l ................ lexical analyzer source
 ray.y ................ parser source
