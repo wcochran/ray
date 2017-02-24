@@ -1,0 +1,59 @@
+Experimental Ray Tracer
+Author: Wayne O. Cochran   wcochran@acm.org
+Description:
+  An experimental ray tracer for rendering an eclectic collection
+  of different solids and surfaces. Many fractal in nature.
+
+Building:
+  Source Code is ANSI C and uses LEX and YACC.
+  A simple Makefile that uses the GNU C compiler is provided.
+  Define USE_PTHREADS if you wanted a multithreaded version
+  which speeds things up a bit on a multicore or multigpu
+  systems if you use one thread per processor.
+
+Running:
+  The executable is called 'ray' and takes one argument
+  which is a scene description file. Take a look at the
+  sample input files in the "input-samples/" directory
+  for an idea of what the scene languages is like.
+  For example, to ray trace the Nine superellipsoids
+  desribed in the "super9.in" file, do the following:
+
+  ./ray super9.in
+
+  Output images are in Portable Pixel Map (PPM) format.
+
+Main files in archive:
+
+README ............... this file
+Makefile ............. builds program 'ray'
+ray.l ................ lexical analyzer source
+ray.y ................ parser source
+raytrace.[ch] ........ ray tracing engine (define USE_PTHREADS for 
+                       multithreaded version)
+sphere.[ch] .......... sphere object
+trim.h ............... trimming definitions
+bbox.[ch] ............ bounding box module
+bezfunc.[ch] ......... Bezier function module
+bezier3.[ch] ......... Cubic Bezier surfaces module
+teapot.[ch] .......... Teapot module
+bilinear.[ch] ........ Bilinear surface module
+fis.[ch] ............. Fractal Interpolation Surface (FIS) module
+bilinearfis.[ch] ..... Bilinear (FIS)  module
+func2.[ch] ........... z = f(x,y) 
+gfis.[ch] ............ General Bilienar FIS module
+hermite.[ch] ......... Hermite surface module
+hermitefis.[ch] ...... Hermite FIS module
+linear.[ch] .......... Linear Algebra utils
+noise.[ch] ........... Perlin noise
+marble.[ch] .......... Procedural marble texture
+plane.[ch] ........... Plane module
+pnmio.[ch] ........... Image I/O
+polygon.[ch] ......... Polygon module
+rectfis.[ch] ......... FIS is rectangular grid module
+rectgrid.[ch] ........ Height funtion on grid module
+ris.[ch] ............. RIS module
+superellipsoid.[ch] .. Superellipsoid module
+unimodalroot.[ch] .... Root finder used by superellipsoid module
+
+

@@ -1,0 +1,36 @@
+#
+# Teapot
+#
+
+LOOKAT = (7, 8, 6), (0,1,0), (0,1,0)  # eye, lookat, up
+PROJECTION = 80, 1                       # fovy, aspect
+IMAGE = "tea3.ppm", 512, 512, 2          # name, w, h, sqrt(samples/pixel)
+#IMAGE = "tea3.ppm", 128, 128, 1          # name, w, h, sqrt(samples/pixel)
+RECURSEDEPTH = 5                          # recursion depth
+AMBIENT = (0.1, 0.1, 0.1)                 # ambient light in scene
+BACKGROUND = (0, 0.1, 0.6)                # background color
+LIGHT = (10, 20, 0), (1, 1, 1), 1, 0, 0  # position, color, attenuation
+LIGHT = (10, 20, 40), (1, 1, 1), 1, 0, 0  # position, color, attenuation
+KA = 0.0                                  # material ambient reflection coeff
+KD = 0.0                                  # material diffuse reflection coeff
+KS = 1.0                                  # material specular reflection coeff
+KT = 0.0                                  # material transmission coeff
+NI = 1.52                                 # material index of refraction
+PHONG = 10                               # shininess exponent
+COLOR = (0.9, 0.9, 0.9)                   # white
+PLANE = (0, 1, 0), (0, 0, 0)              # plane: normal, point on plane
+KA = 0.0                                  # material ambient reflection coeff
+KD = 0.0                                  # material diffuse reflection coeff
+KS = 1.0                                  # material specular reflection coeff
+COLOR = (1.0, 1.0, 1.0)                   # white
+PLANE = (1, 0, 0), (-12, 0, -12)
+KA = 0.1                                  # material ambient reflection coeff
+KD = 0.7                                  # material diffuse reflection coeff
+KS = 0.2                                  # material specular reflection coeff
+MARBLE = ((0.0, 0.8, 0.9),                # marble: rgb interpolants,
+          (0.0, 0.0, 0.3),                #     "vein dir", octaves of noise
+          (0.0, 0.2, 0.4),
+          (0.0, 0.8, 0.9),
+          (0.0, 0.0, 0.3),
+          (0.0, 0.1, 0.2)), (0, 0, 1), 4  
+TEAPOT = (0,0,0), (0,1,0), (1,0,0), 6     # origin, up, spout, scale

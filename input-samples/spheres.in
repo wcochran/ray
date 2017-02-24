@@ -1,0 +1,26 @@
+# spheres scene description file
+
+LOOKAT = (1,0,0), (0,0,0), (0,0,1)   # eye, lookat, up
+PROJECTION = 90, 1                   # fovy, aspect
+#IMAGE = "spheres.ppm", 128, 128, 1   # name, w, h, sqrt(samples/pixel)
+IMAGE = "spheres.ppm", 512, 512, 2   # name, w, h, sqrt(samples/pixel)
+RECURSEDEPTH = 5                     # recursion depth
+AMBIENT = (0.1, 0.1, 0.1)            # ambient light in scene
+BACKGROUND = (0, 0.1, 0.6)           # background color
+LIGHT = (10, 10, 10), (1, 1, 1), 1, 0, 0 # position, color, attenuation
+KA = 0.1                             # material ambient reflection coeff
+KD = 0.7                             # material diffuse reflection coeff
+KS = 0.2                             # material specular reflection coeff
+KT = 1.0                             # material transmission
+NI = 1.52                            # material index of refraction
+PHONG = 10                           # material shininess
+COLOR = (0.6, 0.2, 0.1)              # material color
+SPHERE = (0,0,0), 0.25               # sphere: position, radius
+COLOR = (0.6, 0.8, 0.1)
+KT = 0.0
+SPHERE = (0.25,0,0), 0.1
+SPHERE = (-0.25,0,0), 0.1
+SPHERE = (0,0.25,0), 0.1
+SPHERE = (0,-0.25,0), 0.1
+SPHERE = (0,0,0.25), 0.1
+SPHERE = (0,0,-0.25), 0.1

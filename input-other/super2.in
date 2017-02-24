@@ -1,0 +1,26 @@
+LOOKAT = (1.5,0.6,2.5), (0,0,0), (0,0,1)  # eye, lookat, up
+PROJECTION = 40, 1                        # fovy, aspect
+#IMAGE = "super2.ppm", 256, 256, 1        # name, w, h, sqrt(samples/pixel)
+IMAGE = "super2.ppm", 512, 512, 2          # name, w, h, sqrt(samples/pixel)
+RECURSEDEPTH = 5                          # recursion depth
+#RECURSEDEPTH = 5                          # recursion depth
+AMBIENT = (0.1, 0.1, 0.1)                 # ambient light in scene
+BACKGROUND = (0, 0.1, 0.6)                # background color
+LIGHT = (10, 3, 9), (1, 1, 1), 1, 0, 0  # position, color, attenuation
+
+KA = 0.1                                  # material ambient reflection coeff
+KD = 0.5                                  # material diffuse reflection coeff
+KS = 0.4                                  # material specular reflection coeff
+KT = 0.0                                  # material transmission coeff
+NI = 1.52                                 # material index of refraction
+PHONG = 15                                # material shininess
+COLOR = (0.1, 0.8, 0.2)                   # material color
+SUPERELLIPSOID = 0.5, 0.5, (1,1,1), (0,0,1), (1,0,0), (0,0,0) # n,m, size, z, x, center
+#SPHERE = (0,0,0), 1
+
+KA = 0.1                                  # material ambient reflection coeff
+KD = 0.3                                  # material diffuse reflection coeff
+KS = 0.6                                  # material specular reflection coeff
+KT = 0.0                                  # opaque
+COLOR = (0.9, 0.9, 0.1)                   # yellowish
+PLANE = (0, 0, 1), (0, 0, -1)              # plane: normal, point on plane

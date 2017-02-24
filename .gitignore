@@ -1,0 +1,10 @@
+ray
+*~
+.DS_Store
+*.o
+*.dSYM
+RCS/*
+tmp/*
+crap/*
+super-images/*
+old/*
