@@ -60,6 +60,10 @@ void setMarbleTexture(VecList *colors, double veinDir[3], int octaves);
 void setCheckerTexture(void);
 void makeSphere(double center[3], double rad);
 void makePlane(double normal[3], double point[3]);
+void makeImagePlane(double normal[3], double point[3],
+		    double org[3], double yaxis[3],
+		    double width, double height,
+		    char *imagename);
 void makeBezier3(VecListList *mesh);
 void makeTeapot(double org[3], double up[3], double spout[3], double scale);
 void makeElevationMap(double orgxy[], double widthheight[], 
@@ -105,7 +109,7 @@ int yydebug=1;
 %token LOOKAT PROJ IMAGE RECDEPTH AMBIENT BACKGROUND LIGHTSRC
 %token SIN COS TAN SQRT
 %token KA KD KS KT NI PHONG COLOR MARBLE CHECKER
-%token SPHERE PLANE BEZIER3 TEAPOT ELEVMAP HERMITEFUNC 
+%token SPHERE PLANE IMAGEPLANE BEZIER3 TEAPOT ELEVMAP HERMITEFUNC 
 %token BILINEARFIS HERMITEFIS
 %token BILINEARRIS HERMITERIS
 %token SUPERELLIPSOID
@@ -256,6 +260,10 @@ material   : KA '=' expr                {setMaterialAmbient($3);}
 
 object     : SPHERE '=' vec ',' expr    {makeSphere($3, $5);}
            | PLANE '=' vec ',' vec      {makePlane($3, $5);}
+           | IMAGEPLANE '=' vec ',' vec ','
+                vec ',' vec ',' expr ',' expr ',' STR
+                                        {makeImagePlane($3, $5, 
+                                                $7, $9, $11, $13, $15);}
            | BEZIER3 '=' vec_llist      {makeBezier3($3);}
            | TEAPOT '=' vec ',' vec ',' vec ',' expr
                                         {makeTeapot($3, $5, $7, $9);}
@@ -936,6 +944,30 @@ void makePlane(double normal[3], double point[3]) {
     
   object = createPlaneObjectFromNormalandPoint(normal, point);
   object = setMaterial(object);
+
+  objects[numObjects++] = object;
+}
+
+void makeImagePlane(double normal[3], double point[3],
+		    double org[3], double yaxis[3],
+		    double width, double height,
+		    char *imagename) {
+  OBJECT *object;
+  pnm_image *image;
+
+#ifdef VERBOSE
+  printf("makePlane((%f,%f,%f), (%f,%f,%f))\n",
+	 normal[0], normal[1], normal[2], point[0], point[1], point[2]);
+#endif
+
+  if (numObjects >= MAX_OBJECTS)
+    fatalError("Too friggin many objects!");
+    
+  object = createPlaneObjectFromNormalandPoint(normal, point);
+  object = setMaterial(object);
+
+  image = read_pnm_image_from_file(imagename);
+  mapImageToPlane(object, 1, 1, org, yaxis, width, height, image);
 
   objects[numObjects++] = object;
 }

@@ -33,6 +33,7 @@ MARBLE                              {return MARBLE;}
 CHECKER                             {return CHECKER;}
 SPHERE                              {return SPHERE;}
 PLANE                               {return PLANE;}
+IMAGEPLANE                          {return IMAGEPLANE;}
 BEZIER3                             {return BEZIER3;}
 TEAPOT                              {return TEAPOT;}
 ELEVMAP                             {return ELEVMAP;}
