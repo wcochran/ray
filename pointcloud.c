@@ -64,11 +64,11 @@ typedef struct {
 
 //
 // Three case for octree node
-//   node = NULL => empty child
+//   node = NULL => empty leaf
 //   node != NULL and node->child == NULL => filled leaf
 //   node != NULL and node->child != NULL => internal node with 
 //              8 children (some of which may be NULL)
-//  The actually data for a filled leaf is stored in a GridDataHashTable
+//  The actual data for a filled leaf is stored in a GridDataHashTable
 //  which is indexed at its eight corners.
 //
 typedef struct OctreeNode {
@@ -79,7 +79,7 @@ typedef struct {
     int maxLevel;
     BBOX bbox;
     IndexBox indexBox;
-    GridHashTable *GridHashTable;
+    GridHashTable *gridHashTable;
     OctreeNode *root;
 } Octree;
 
@@ -251,7 +251,6 @@ void subdivide(OctreeNode *node, int level, int maxLevel,
 
     int n = 0;
 
-    node->isFilled = true; // don't care
     node->child = (OctreeNode **) malloc(8*sizeof(OctreeNode*));
 
     BBOX childBBox;
@@ -296,4 +295,70 @@ void subdivide(OctreeNode *node, int level, int maxLevel,
             }
         }
     }
+}
+
+static
+void setIndexBox(IndexBox *ibox, int maxLevel) {
+    ibox->min.i = ibox->min.j = ibox->min.k = 0;
+    ibox->max.i = ibox->max.j = ibox->max.k = 1 << maxLevel;
+}
+
+void getBoundingBox(BBOX *bbox, VertArray *pointCloud) {
+    assert(pointCloud->num > 0);
+    bbox->min.x = bbox->max.x = pointCloud->verts[0].pos.x;
+    bbox->min.y = bbox->max.y = pointCloud->verts[0].pos.y;
+    bbox->min.z = bbox->max.z = pointCloud->verts[0].pos.z;
+    for (int i = 0; i < pointCloud->num; i++) {
+        Vec3 *p = &pointCloud->verts[i].pos;
+        if (p->x < bbox->min.x) bbox->min.x = p->x;
+        if (p->x > bbox->max.x) bbox->max.x = p->x;
+        if (p->y < bbox->min.y) bbox->min.y = p->y;
+        if (p->y > bbox->max.y) bbox->max.y = p->y;
+        if (p->z < bbox->min.z) bbox->min.z = p->z;
+        if (p->z > bbox->max.z) bbox->max.z = p->z;
+    }
+}
+
+void inflateBoundingBox(BBOX *bbox, double fraction) {
+    const double dx = fraction*(bbox->max.x - bbox->min.x)/2;
+    const double dy = fraction*(bbox->max.y - bbox->min.y)/2;
+    const double dz = fraction*(bbox->max.z - bbox->min.z)/2;
+    bbox->min.x -= dx;
+    bbox->min.y -= dy;
+    bbox->min.z -= dz;
+    bbox->max.x += dx;
+    bbox->max.y += dy;
+    bbox->max.z += dz;
+}
+
+void cubeBoundingBox(BBOX *bbox) {
+    const double w = bbox->max.x - bbox->min.x;
+    const double h = bbox->max.y - bbox->min.y;
+    const double d = bbox->max.z - bbox->min.z;
+    float size = w;
+    if (h > size) size = h;
+    if (d > size) size = d;
+    const double dx = (size - w)/2;
+    const double dy = (size - h)/2;
+    const double dz = (size - d)/2;
+    bbox->min.x -= dx;
+    bbox->min.y -= dy;
+    bbox->min.z -= dz;
+    bbox->max.x += dx;
+    bbox->max.y += dy;
+    bbox->max.z += dz;
+}
+
+Octree *createOctree(VertArray *pointCloud, 
+        int maxLevel,
+        float sigma, float radius) {
+    Octree *octree = (Octree*) malloc(sizeof(Octree));
+    octree->maxLevel;
+    getBoundingBox(&octree->bbox, pointCloud);
+    inflateBoundingBox(&octree->bbox, 0.01);
+    cubeBoundingBox(&octree->bbox);
+    setIndexBox(&octree->indexBox, maxLevel);
+    octree->gridHashTable = createGridHashTable(10003);
+    octree->root = XXX;
+
 }
