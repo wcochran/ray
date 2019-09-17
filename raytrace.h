@@ -68,6 +68,9 @@ typedef union {
   struct {
     double h[3];     /* hit point in modelling coordinates */
   } superellipsoid;
+  struct {
+    int i,j,k;       /* index of grid cell corner for intersection */
+  } pointcloud;
 } HIT_INFO;
 
 /*

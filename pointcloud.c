@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include <assert.h>
 #include "bbox.h"
 #include "pointcloud.h"
@@ -229,22 +230,37 @@ void createFilledLeaf(VertArray *verts,
     }
 }
 
-static
-void subdivide(OctreeNode *node, int level, int maxLevel,
-        BBOX *bbox, IndexBox *iBox, GridHashTable *hashTable,
-        VertArray *verts, float radius, float sigma) {
+Vec3 bboxCenter(BBOX *bbox) {
     Vec3 C;
     C.x = (bbox->min.x + bbox->max.x)/2;
     C.y = (bbox->min.y + bbox->max.y)/2;
     C.z = (bbox->min.z + bbox->max.z)/2;
-    double X[3] = {bbox->min.x, C.x, bbox->max.x};
-    double Y[3] = {bbox->min.y, C.y, bbox->max.y};
-    double Z[3] = {bbox->min.z, C.z, bbox->max.z};
+    return C;
+}
 
+Index IndexBoxCenter(IndexBox *iBox) {
     Index centerIndex;
     centerIndex.i = (iBox->min.i + iBox->max.i)/2;
     centerIndex.j = (iBox->min.j + iBox->max.j)/2;
     centerIndex.k = (iBox->min.k + iBox->max.k)/2;
+    return centerIndex;
+}
+
+BBOX createBoundingBox(double xmin, double ymin, double zmin,
+        double xmax, double ymax, double zmax) {
+    BBOX bbox = {xmin, ymin, zmin, xmax, ymax, zmax};
+}
+
+static
+void subdivide(OctreeNode *node, int level, int maxLevel,
+        BBOX *bbox, IndexBox *iBox, GridHashTable *hashTable,
+        VertArray *verts, float sigma, float radius) {
+    Vec3 C = bboxCenter(bbox);
+    double X[3] = {bbox->min.x, C.x, bbox->max.x};
+    double Y[3] = {bbox->min.y, C.y, bbox->max.y};
+    double Z[3] = {bbox->min.z, C.z, bbox->max.z};
+
+    Index centerIndex = IndexBoxCenter(iBox);
     int I[3] = {iBox->min.i, centerIndex.i, iBox->max.i};
     int J[3] = {iBox->min.j, centerIndex.j, iBox->max.j};
     int K[3] = {iBox->min.k, centerIndex.k, iBox->max.k};
@@ -308,13 +324,13 @@ void getBoundingBox(BBOX *bbox, VertArray *pointCloud) {
     bbox->min.x = bbox->max.x = pointCloud->verts[0].pos.x;
     bbox->min.y = bbox->max.y = pointCloud->verts[0].pos.y;
     bbox->min.z = bbox->max.z = pointCloud->verts[0].pos.z;
-    for (int i = 0; i < pointCloud->num; i++) {
+    for (int i = 1; i < pointCloud->num; i++) {
         Vec3 *p = &pointCloud->verts[i].pos;
         if (p->x < bbox->min.x) bbox->min.x = p->x;
-        if (p->x > bbox->max.x) bbox->max.x = p->x;
         if (p->y < bbox->min.y) bbox->min.y = p->y;
-        if (p->y > bbox->max.y) bbox->max.y = p->y;
         if (p->z < bbox->min.z) bbox->min.z = p->z;
+        if (p->x > bbox->max.x) bbox->max.x = p->x;
+        if (p->y > bbox->max.y) bbox->max.y = p->y;
         if (p->z > bbox->max.z) bbox->max.z = p->z;
     }
 }
@@ -349,6 +365,7 @@ void cubeBoundingBox(BBOX *bbox) {
     bbox->max.z += dz;
 }
 
+static
 Octree *createOctree(VertArray *pointCloud, 
         int maxLevel,
         float sigma, float radius) {
@@ -359,6 +376,451 @@ Octree *createOctree(VertArray *pointCloud,
     cubeBoundingBox(&octree->bbox);
     setIndexBox(&octree->indexBox, maxLevel);
     octree->gridHashTable = createGridHashTable(10003);
-    octree->root = XXX;
-
+    octree->root = (OctreeNode*) malloc(sizeof(OctreeNode));
+    octree->root->child = NULL;
+    subdivide(octree->root, 0, maxLevel, 
+            &octree->bbox, &octree->indexBox,
+            &octree->gridHashTable, pointCloud, 
+            sigma, radius);
+    return octree;
 }
+
+//
+// Convert ray from "world coordinates" to 
+// "unit bounding box coordinates."
+//
+static
+void unitRay(BBOX *bbox, 
+        double rayOrg[3], double rayDir[3],
+        double unitRayOrg[3], double unitRayDir[3]) {
+    const double sx = 1/(bbox->max.x - bbox->min.x);
+    const double sy = 1/(bbox->max.y - bbox->min.y);
+    const double sz = 1/(bbox->max.z - bbox->min.z);
+    unitRayOrg[0] = (bbox->max.x - rayOrg[0])*sx;
+    unitRayOrg[1] = (bbox->max.y - rayOrg[1])*sy;
+    unitRayOrg[2] = (bbox->max.z - rayOrg[2])*sz;
+    unitRayDir[0] = (bbox->max.x - rayDir[0])*sx;
+    unitRayDir[1] = (bbox->max.y - rayDir[1])*sy;
+    unitRayDir[2] = (bbox->max.z - rayDir[2])*sz;
+}
+
+//
+// Given the ray direction and bounding box for a filled
+// octree leaaf, we find the coefficeints for a cubic polynomial
+//    f(t) = A*t^3 + B*t^2 + C*t + D
+// whose zeros occur at the t-values where the ray intersects
+// the underlying trilinear implicit surface.
+// See Section 2 of "Fast and Accurate Ray-Voxel Intersection Techniques
+// fir Iso Surface Ray Tracing" by Marmitt, et al 
+// ftp://ftp.mpi-sb.mpg.de/pub/conferences/vmv04/submissions/153/isoisec.pdf
+//
+static
+void rayCubicTrilinearInterpolater(double rayOrg[3], double rayDir[3],
+        BBOX *bbox, 
+        IndexBox *ibox, GridHashTable *hashTable, // grid information
+        double coeff[4]) {
+    double unitRayOrg[3], unitRayDir[3];
+    unitRay(bbox, rayOrg, rayDir, unitRayOrg, unitRayDir);
+
+    double uorg[2] = {unitRayOrg[0], 1 - unitRayOrg[0]};
+    double vorg[2] = {unitRayOrg[1], 1 - unitRayOrg[1]};
+    double worg[2] = {unitRayOrg[2], 1 - unitRayOrg[2]};
+
+    double udir[2] = {unitRayDir[0], 1 - unitRayDir[0]};
+    double vdir[2] = {unitRayDir[1], 1 - unitRayDir[1]};
+    double wdir[2] = {unitRayDir[2], 1 - unitRayDir[2]};
+
+    double A = 0, B = 0, C = 0, D = 0;
+    for (int k = 0; k < 2; k++)
+        for (int j = 0; j < 2; j++)
+            for (int i = 0; i < 2; i++) {
+                GridData *g = gridDataLookup(hashTable, // assume at filled leaf
+                    ibox->min.i+i, ibox->min.j+j, ibox->min.k+k);
+                assert(g != NULL);
+                double f = g->f;
+                A += udir[i]*vdir[j]*wdir[k]*f;
+                B += (uorg[i]*vdir[j]*wdir[k] + 
+                     udir[i]*vorg[j]*wdir[k] +
+                     udir[i]*vdir[j]*worg[k])*f;
+                C += (udir[i]*vorg[j]*worg[k] + 
+                     uorg[i]*vdir[j]*worg[k] +
+                     uorg[i]*vorg[j]*wdir[k])*f;
+                D += uorg[i]*vorg[j]*worg[k]*f;
+            }
+
+    coeff[0] = A;
+    coeff[1] = B;
+    coeff[2] = C;
+    coeff[3] = D;
+}
+
+static
+int quadratic(double B, double C, double roots[2]) {
+  double det = B*B - 4*C;
+  if (det < 0.0) return 0;  /* imaginary */
+  det = sqrt(det);
+  roots[0] = 0.5*(-B + det);
+  roots[1] = 0.5*(-B - det);
+  return 1;
+}
+
+//
+// Eval cubic polynomial
+//    F(t) = A*t^3 + B*t^2 + C*t + D
+//
+static
+inline double F(double t, double A, double B, double C, double D) {
+    return ((A*t + B)*t + C)*t + D;
+}
+
+//
+// See Section 4 (Algorithm 3) of "Fast and Accurate Ray-Voxel Intersection Techniques
+// for Iso Surface Ray Tracing" by Marmitt, et al 
+// ftp://ftp.mpi-sb.mpg.de/pub/conferences/vmv04/submissions/153/isoisec.pdf
+//
+static
+double cubicRootFinder(double C[4], double tin, double tout) {
+
+    //
+    // Handle constant, linear, or quadratic case.
+    //
+    if (fabs(C[0]) <= 0) {
+        if (fabs(C[1]) <= 0) {
+            if (fabs(C[2] <= 0))  
+                return -1;  // constant -- no root
+            double t = C[3]/C[2];
+            if (tin <= t && t <= tout) return t; // linear -- one root
+            return -1.0;
+        }
+        double roots[2];
+        if (quadratic(C[2]/C[1], C[3]/C[1], roots)) { // quadratic -- two roots
+            double t;
+            if (roots[0] < tin && roots[1] < tin) return -1;
+            if (roots[0] < tin) t = roots[1];
+            else if (roots[1] < tin) t = roots[0];
+            else t = roots[0] < roots[1] ? roots[0] : roots[1];
+            if (t <= tout) return t;
+        }
+        return -1.0;
+    }
+
+    //
+    // Follow Algorithm 3 in paper.
+    //
+
+    double t0 = tin;
+    double t1 = tout;
+    double f0 = F(t0, C[0],C[1],C[2],C[3]);
+    double f1 = F(t1, C[0],C[1],C[2],C[3]);
+
+    double droots[2];
+    if (quadratic(2*C[1]/(3*C[0]), C[2]/(3*C[0]), droots)) { // has 2 real roots
+        if (droots[0] < droots[1]) { // sort roots in ascending order
+            double tmp = droots[0];
+            droots[0] = droots[1];
+            droots[1] = tmp;
+        }
+        for (int i = 0; i < 2; i++) {
+            double t = droots[i];
+            if (t0 <= t && t <= t1) {
+                double f = F(t, C[0],C[1],C[2],C[3]);
+                if (signbit(f) == signbit(f0)) {
+                    t0 = t;
+                    f0 = f;
+                } else {
+                    t1 = t;
+                    f1 = f;
+                }
+            }
+        }
+    }
+
+    if (signbit(f0) == signbit(f1)) return -1.0;
+
+    const int numIters = 3;
+    for (int i = 0; i < numIters; i++) {
+        assert(f0 != f1);
+        double t = t0 + (t1 - t0)*(-f0/(f1 - f0));
+        double f = F(t, C[0],C[1],C[2],C[3]);
+        if (signbit(f) == signbit(f0)) {
+            t0 = t;
+            f0 = f;
+        } else {
+            t1 = t;
+            f1 = f;
+        }
+    }
+
+    assert(f0 != f1);
+    double thit = t0 + (t1 - t0)*(-f0/(f1 - f0));
+    return thit;
+}
+
+typedef struct {    // Child ray intersection info
+    double t[2];    // entry / exit ray parameter
+    int n;          // octree index
+    BBOX bbox;      // bounding box (interior node)
+    IndexBox ibox;  // grid indices
+} ChildInfo;
+
+//
+// Sorting octree children info on t[0] = smallest ray
+// entry point.
+//
+int childInfoPtrCompare(const ChildInfo **A, const ChildInfo **B) {
+    double diff = (*A)->t[0] - (*B)->t[0];
+    return signbit(diff);
+}
+
+static
+double rayIntersection(double rayOrg[3], double rayDir[3],
+        OctreeNode *node, BBOX *bbox, IndexBox *ibox,
+        GridHashTable *hashTable,
+        double tinterval[2], Index *hitIndex) {
+    double thit = -1.0;
+
+    if (node->child == NULL) {  // filled leaf
+        double C[4];
+        rayCubicTrilinearInterpolater(rayOrg, rayDir,
+            bbox, ibox, hashTable, C);
+        thit = cubicRootFinder(C, tinterval[0], tinterval[1]);
+        if (thit >= EPSILON) {
+            *hitIndex = ibox->min;
+        }
+    } else { // internal node
+        Vec3 C = bboxCenter(bbox);
+        double X[3] = {bbox->min.x, C.x, bbox->max.x};
+        double Y[3] = {bbox->min.y, C.y, bbox->max.y};
+        double Z[3] = {bbox->min.z, C.z, bbox->max.z};
+
+        Index centerIndex = IndexBoxCenter(ibox);
+        int I[3] = {ibox->min.i, centerIndex.i, ibox->max.i};
+        int J[3] = {ibox->min.j, centerIndex.j, ibox->max.j};
+        int K[3] = {ibox->min.k, centerIndex.k, ibox->max.k};
+
+        int n = 0;
+
+        int numChildren = 0;
+        ChildInfo childInfo[8];
+
+        for (int k = 0; k < 2; k++) {
+            for (int j = 0; j < 2; j++) {
+                for (int i = 0; i < 2; i++) {
+
+                    if (node->child[n] != NULL) {
+                        BBOX cbox = {X[i], Y[j], Z[k], X[i+1], Y[j+1], Z[k+1]};
+                        double tchild[2];
+                        if (rayHitsBoundingBox(&cbox, rayOrg, rayDir, tchild)) {
+                            assert(tchild[0] >= 0.0);
+                            if (tchild[0] <= tinterval[1] && tchild[1] >= tinterval[0]) {
+                                ChildInfo cinfo = {
+                                    {tchild[0], tchild[1]},
+                                    n,
+                                    cbox,
+                                    {I[i], J[j], K[k], I[i+1], J[j+1], K[k+1]}
+                                };
+                                childInfo[numChildren++] = cinfo;
+                            }
+                        }
+                    }
+
+                    n++;
+                }
+            }
+        }
+        
+        if (numChildren > 0) {
+            ChildInfo *childInfoPtr[8];
+            for (int i = 0; i < numChildren; i++)
+                childInfoPtr[i] = &childInfo[i];
+            qsort(childInfoPtr, numChildren, sizeof(ChildInfo*), 
+                (int (*)(const void *, const void *)) childInfoPtrCompare);
+            for (int i = 0; i < numChildren; i++) {
+                double t0 = childInfoPtr[i]->t[0];
+                if (thit < 0 || t0 < thit) {
+                    int n = childInfoPtr[i]->n;
+                    BBOX *cbox = &childInfoPtr[i]->bbox;
+                    IndexBox *ibox = &childInfoPtr[i]->ibox;
+                    double t1 = childInfoPtr[i]->t[1];
+                    double tint[2] = {t0, t1};
+                    Index closestHitIndex;
+                    double t = rayIntersection(rayOrg, rayDir, node->child[n], 
+                                    cbox, ibox, hashTable, tint, &closestHitIndex);
+                    if (t > 0 && (thit < 0 || t < thit)) {
+                        thit = t;
+                        *hitIndex = closestHitIndex;
+                    }
+                }
+            }
+        }
+
+    }
+
+    return thit;
+}
+
+VertArray *readPLY(const char *fname) {
+    FILE *f = fopen(fname, "rb'");
+    if (f == NULL) {perror(fname); return NULL;}
+    char buf[200];
+    if (fgets(buf, sizeof(buf), f) == NULL || strncmp("ply", buf, 3) != 0) {
+        fprintf(stderr, "%s: bogus ply file!\n", fname);
+        fclose(f);
+        return NULL;
+    }
+    while (fgets(buf, sizeof(buf), f) != NULL && 
+        strncmp("element vertex", 14) != 0)
+        ;
+    int numVerts = 0;
+    if (sscanf(buf + 14, "%d", &numVerts) != 1 || numVerts < 1) {
+        fprintf(stderr, "%s: bogus number of vertices!\n", fname);
+        fclose(f);
+        return NULL;
+    }
+    int numProperties = 0;
+    while (fgets(buf, sizeof(buf), f) != NULL &&
+            strncmp("property", buf, 8) == 0)
+        numProperties++;
+    if (numProperties != 10) {
+        fprintf(stderr, 
+            "%s: should be exactly 10 properties (verts:3 + colors:4 + normals:3)!\n", 
+            fname);
+        fclose(f);
+        return NULL;
+    }
+    fclose(f);
+    while (fgets(buf, sizeof(buf), f) != NULL &&
+            strncmp("end_header", buf, 8) != 0)
+        ;
+
+    VertArray *pointCloud = createVertArray(0, numVerts);
+
+    for (int n = 0; n < numVerts; n++) {
+        float pos[3];
+        uint8_t color[4];
+        float normal[3];
+        if (fread(pos, sizeof(float), 3, f) != 3 ||
+            fread(color, sizeof(uint8_t), 4, f) != 4 ||
+            fread(normal, sizeof(float), 3, f) != 3) {
+            fprintf(stderr, 
+                "%s: Error reading vertex %d info!\n", 
+                fname, n);
+            fclose(f);
+            return NULL;
+        }
+        Vert vert = {
+            pos[0], pos[1], pos[2],
+            color[0]/255.0, color[1]/255.0, color[2]/255.0, color[3]/255.0,
+            normal[0], normal[1], normal[2]
+        };
+        addVert(pointCloud, &vert);
+    }
+
+    return pointCloud;
+}
+
+typedef struct {
+    VertArray *pointCloud;
+    Octree *octree;
+} POINTCLOUD_DATA;
+
+static
+double rayHit(struct OBJECT *this, 
+            double rayOrg[3],
+            double rayDir[3],
+            HIT_INFO *info) {
+    POINTCLOUD_DATA *data = (POINTCLOUD_DATA*) this->data;
+    Octree *octree = data->octree;
+    double tbox[2];
+    if (rayHitsBoundingBox(&octree->bbox, rayOrg, rayDir, tbox)) {
+        Index hitIndex;
+        double t = rayIntersection(rayOrg, rayDir,
+            octree->root, 
+            &octree->bbox, 
+            &octree->indexBox, octree->gridHashTable, 
+            tbox, &hitIndex);
+        info->pointcloud.i = hitIndex.i;
+        info->pointcloud.j = hitIndex.j;
+        info->pointcloud.k = hitIndex.k;
+        return t;
+    }
+    return -1.0;
+}
+
+static
+void getNormal(struct OBJECT *this, 
+            double hitPoint[3],
+            HIT_INFO *info,  
+            double normal[3]) {
+    POINTCLOUD_DATA *data = (POINTCLOUD_DATA*) this->data;
+    Octree *octree = data->octree;
+    GridHashTable *hashTable = octree->gridHashTable;
+
+    double dx = (octree->bbox.max.x - octree->bbox.min.x)/octree->maxLevel;
+    double dy = (octree->bbox.max.y - octree->bbox.min.y)/octree->maxLevel;
+    double dz = (octree->bbox.max.z - octree->bbox.min.z)/octree->maxLevel;
+    double x0 = info->pointcloud.i*dx + octree->bbox.min.x;
+    double y0 = info->pointcloud.j*dy + octree->bbox.min.y;
+    double z0 = info->pointcloud.k*dz + octree->bbox.min.z;
+    double u = (hitPoint[0] - x0)/dx;
+    double v = (hitPoint[1] - y0)/dy;
+    double w = (hitPoint[2] - z0)/dy;
+    double U[2] = {1-u, u};
+    double V[2] = {1-v, v};
+    double W[2] = {1-w, w};
+
+    normal[0] = normal[1] = normal[2] = 0;
+    for (int k = 0; k < 2; k++)
+        for (int j = 0; j < 2; j++)
+            for (int i = 0; i < 2; i++) {
+                GridData *g = gridDataLookup(hashTable, i,j,k);
+                assert(g != NULL);
+                for (int d = 0; d < 3; d++)
+                    normal[d] += U[i]*V[j]*W[k]*g->normal[d];
+            }
+
+    double m2 = normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2];
+    double s = m2 > 0 ? 1/sqrt(m2) : 1;
+    normal[0] *= s;
+    normal[1] *= s;
+    normal[2] *= s;
+}
+
+static
+void getColor(struct OBJECT *this, 
+            double hitPoint[3],
+            HIT_INFO *info,  
+            double color[3]) {
+    // XXXX
+}
+
+OBJECT *createPointCloudObject(const char *plyfile, int maxLevel, float sigma) {
+    VertArray *pointcloud = readPLY(plyfile);
+    if (pointcloud == NULL) return NULL;
+    float radius = 2.5*sigma;
+    Octree *octree = createOctree(pointcloud, maxLevel, sigma, radius);
+
+    OBJECT *object = (OBJECT *) malloc(sizeof(OBJECT));
+
+    POINTCLOUD_DATA *data = (POINTCLOUD_DATA*) malloc(sizeof(POINTCLOUD_DATA));
+    data->pointCloud = pointcloud;
+    data->octree = octree;
+
+    object->data = data;
+    object->rayHit = rayHit;
+    object->normal = getNormal;
+    object->color = getColor;
+    object->setColor = NULL;
+    
+    object->ka = 0.1;
+    object->kd = 0.80;
+    object->ks = 0.1;
+    object->kt = 0.0;
+    object->ni = 1.52;
+    object->phong = 6.0;
+
+    return object;
+}
+
+// destroyPointCloudObject
+// We'll leak memory for now
