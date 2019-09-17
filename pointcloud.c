@@ -748,6 +748,24 @@ double rayHit(struct OBJECT *this,
 }
 
 static
+void getTrilinearInterpolationWeights(Octree *octree,
+        Index *index, double hitPoint[3],
+        double U[2], double V[2], double W[2]) {
+    double dx = (octree->bbox.max.x - octree->bbox.min.x)/octree->maxLevel;
+    double dy = (octree->bbox.max.y - octree->bbox.min.y)/octree->maxLevel;
+    double dz = (octree->bbox.max.z - octree->bbox.min.z)/octree->maxLevel;
+    double x0 = index->i*dx + octree->bbox.min.x;
+    double y0 = index->j*dy + octree->bbox.min.y;
+    double z0 = index->k*dz + octree->bbox.min.z;
+    double u = (hitPoint[0] - x0)/dx;
+    double v = (hitPoint[1] - y0)/dy;
+    double w = (hitPoint[2] - z0)/dz;
+    U[0] = 1-u; U[1] = u;
+    V[0] = 1-v; V[1] = v;
+    W[0] = 1-w; W[1] = w;
+}
+
+static
 void getNormal(struct OBJECT *this, 
             double hitPoint[3],
             HIT_INFO *info,  
@@ -755,20 +773,26 @@ void getNormal(struct OBJECT *this,
     POINTCLOUD_DATA *data = (POINTCLOUD_DATA*) this->data;
     Octree *octree = data->octree;
     GridHashTable *hashTable = octree->gridHashTable;
+    Index index = {
+        info->pointcloud.i,
+        info->pointcloud.j,
+        info->pointcloud.k
+    };
 
-    double dx = (octree->bbox.max.x - octree->bbox.min.x)/octree->maxLevel;
-    double dy = (octree->bbox.max.y - octree->bbox.min.y)/octree->maxLevel;
-    double dz = (octree->bbox.max.z - octree->bbox.min.z)/octree->maxLevel;
-    double x0 = info->pointcloud.i*dx + octree->bbox.min.x;
-    double y0 = info->pointcloud.j*dy + octree->bbox.min.y;
-    double z0 = info->pointcloud.k*dz + octree->bbox.min.z;
-    double u = (hitPoint[0] - x0)/dx;
-    double v = (hitPoint[1] - y0)/dy;
-    double w = (hitPoint[2] - z0)/dy;
-    double U[2] = {1-u, u};
-    double V[2] = {1-v, v};
-    double W[2] = {1-w, w};
+    //
+    // Determine hitPoint relative to the grid cell that
+    // the surface intersection occurred in.
+    // If the bounding box is a cube, then dx = dy = dz.
+    //
+    double U[2], V[2], W[2];
+    getTrilinearInterpolationWeights(octree, &index, hitPoint,
+        U, V, W);
 
+    //
+    // Determine resulting normal via trilinear interpolation
+    // of the 8 corner normals of the grid cell.
+    // The grid normals are stored in our grid hash table.
+    //
     normal[0] = normal[1] = normal[2] = 0;
     for (int k = 0; k < 2; k++)
         for (int j = 0; j < 2; j++)
@@ -779,6 +803,9 @@ void getNormal(struct OBJECT *this,
                     normal[d] += U[i]*V[j]*W[k]*g->normal[d];
             }
 
+    //
+    // Normalize the normal so that it has unit length.
+    //
     double m2 = normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2];
     double s = m2 > 0 ? 1/sqrt(m2) : 1;
     normal[0] *= s;
@@ -791,7 +818,38 @@ void getColor(struct OBJECT *this,
             double hitPoint[3],
             HIT_INFO *info,  
             double color[3]) {
-    // XXXX
+   POINTCLOUD_DATA *data = (POINTCLOUD_DATA*) this->data;
+    Octree *octree = data->octree;
+    GridHashTable *hashTable = octree->gridHashTable;
+    Index index = {
+        info->pointcloud.i,
+        info->pointcloud.j,
+        info->pointcloud.k
+    };
+
+    //
+    // Determine hitPoint relative to the grid cell that
+    // the surface intersection occurred in.
+    // If the bounding box is a cube, then dx = dy = dz.
+    //
+    double U[2], V[2], W[2];
+    getTrilinearInterpolationWeights(octree, &index, hitPoint,
+        U, V, W);
+
+    //
+    // Determine resulting normal via trilinear interpolation
+    // of the 8 corner normals of the grid cell.
+    // The grid normals are stored in our grid hash table.
+    //
+    color[0] = color[1] = color[2] = 0;
+    for (int k = 0; k < 2; k++)
+        for (int j = 0; j < 2; j++)
+            for (int i = 0; i < 2; i++) {
+                GridData *g = gridDataLookup(hashTable, i,j,k);
+                assert(g != NULL);
+                for (int d = 0; d < 3; d++)
+                    color[d] += U[i]*V[j]*W[k]*g->color[d];
+            }
 }
 
 OBJECT *createPointCloudObject(const char *plyfile, int maxLevel, float sigma) {

@@ -3,6 +3,6 @@
 
 #include "raytrace.h"
 
-OBJECT *createPointCloudObject(const char *plyfile);
+OBJECT *createPointCloudObject(const char *plyfile, int maxLevel, float sigma);
 
 #endif /* POINTCLOUD_H */
