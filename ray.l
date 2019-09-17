@@ -43,6 +43,7 @@ HERMITEFIS                          {return HERMITEFIS;}
 BILINEARRIS                         {return BILINEARRIS;}
 HERMITERIS                          {return HERMITERIS;}
 SUPERELLIPSOID                      {return SUPERELLIPSOID;}
+POINTCLOUD                          {return POINTCLOUD;}
 [,=\(\)\{\}\+\-\*\/]                {return yytext[0];}
 \".*\"                              {yylval.s = stripq(yytext); return STR;}
 [a-zA-Z\_][a-zA-Z0-9\_]*            {yylval.s = strdup(yytext); return IDENT;}

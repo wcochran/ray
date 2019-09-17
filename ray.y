@@ -86,6 +86,7 @@ void makeHermiteRis(int M, int N, int Sx, int Sy, double x0, double y0,
                     Matrix *z, Matrix *zx, Matrix *zy, Matrix *zxy);
 void makeSuperellipsoid(double n, double m, 
 			double size[3], double z[3], double x[3], double center[3]);
+void makePointCloud(const char *fname, double maxLevel, double sigma);
 #ifdef YYDEBUG
 int yydebug=1;
 #endif
@@ -112,7 +113,7 @@ int yydebug=1;
 %token SPHERE PLANE IMAGEPLANE BEZIER3 TEAPOT ELEVMAP HERMITEFUNC 
 %token BILINEARFIS HERMITEFIS
 %token BILINEARRIS HERMITERIS
-%token SUPERELLIPSOID
+%token SUPERELLIPSOID POINTCLOUD
 %left '+' '-'
 %left '*' '/'
 %right UMINUS
@@ -304,6 +305,9 @@ object     : SPHERE '=' vec ',' expr    {makeSphere($3, $5);}
            /* n, m, size[3], z[3], x[3], center[3] */
            | SUPERELLIPSOID '=' expr ',' expr ',' vec ',' vec ',' vec ',' vec
                                         {makeSuperellipsoid($3,$5,$7,$9,$11,$13);}
+
+           | POINTCLOUD '=' STR ',' expr ',' expr
+                   {makePointCloud($3, $5, $7);}
            ;
 %%
 
@@ -333,6 +337,7 @@ object     : SPHERE '=' vec ',' expr    {makeSphere($3, $5);}
 #include "hermitefis.h"
 #include "ris.h"
 #include "superellipsoid.h"
+#include "pointcloud.h"
 
 /*
  * Bitmaps to track which parameters were set at least once.
@@ -926,6 +931,23 @@ void makeSuperellipsoid(double n, double m,
     fatalError("Too friggin many objects!");
 
   object = createSuperellipsoidObject(n,m, size, z, x, center);
+  object = setMaterial(object);
+
+  objects[numObjects++] = object;
+}
+
+void makePointCloud(const char *fname, double maxLevel, double sigma) {
+  OBJECT *object;
+
+#ifdef VERBOSE
+  printf("makePointCloud(%s,%f,%f)\n", 
+	 fname, maxLevel, sigma);
+#endif
+
+  if (numObjects >= MAX_OBJECTS)
+    fatalError("Too friggin many objects!");
+
+  object = createPointCloudObject(fname, (int) maxLevel, (float) sigma);
   object = setMaterial(object);
 
   objects[numObjects++] = object;

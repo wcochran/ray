@@ -1,6 +1,6 @@
 CC=gcc
-#COPTS=-g -Wall -DVERBOSE
-COPTS=-O3
+COPTS=-g -Wall -DVERBOSE
+#COPTS=-O3
 YACC=yacc
 #YACCOPTS=-t -v
 YACCOPTS=
@@ -22,7 +22,7 @@ LIBS=-lm -ll
 ray: y.tab.o lex.yy.o raytrace.o pnmio.o sphere.o plane.o teapot.o bezier3.o \
             func2.o hermite.o rectgrid.o bbox.o noise.o marble.o checker.o \
             bilinear.o rectfis.o bilinearfis.o hermitefis.o ris.o \
-            unimodalroot.o superellipsoid.o
+            unimodalroot.o superellipsoid.o pointcloud.o
 	$(CC) $(COPTS) $^ -o $@ $(LIBS)
 
 y.tab.o: ray.y raytrace.h pnmio.h sphere.h
@@ -56,6 +56,7 @@ checker.o: checker.c checker.h noise.h raytrace.h
 noise.o: noise.c noise.h
 unimodalroot.o: unimodalroot.c unimodalroot.h
 superellipsoid.o: superellipsoid.c superellipsoid.h unimodalroot.h raytrace.h bbox.h
+pointcloud.o: pointcloud.c pointcloud.h bbox.h
 
 testunimodalroot: testunimodalroot.c unimodalroot.c unimodalroot.h
 	$(CC) $(COPTS) testunimodalroot.c unimodalroot.c -o $@

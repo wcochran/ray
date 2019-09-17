@@ -25,7 +25,7 @@ static
 GridHashTable *createGridHashTable(int size) {
     GridHashTable *hashTable = (GridHashTable*)malloc(sizeof(GridHashTable));
     hashTable->numElems = size;
-    hashTable->table = (GridData*) malloc(size*sizeof(GridData*));
+    hashTable->table = (GridData**) malloc(size*sizeof(GridData*));
     for (int i = 0; i < size; i++)
         hashTable->table[i] = NULL;
     return hashTable;
@@ -52,6 +52,7 @@ GridData *gridDataInsert(GridHashTable *hashTable, GridData *gridData) {
     GridData *n = hashTable->table[index];
     gridData->next = n;
     hashTable->table[index] = gridData;
+    return gridData;
 }
 
 typedef struct {
@@ -248,7 +249,8 @@ Index IndexBoxCenter(IndexBox *iBox) {
 
 BBOX createBoundingBox(double xmin, double ymin, double zmin,
         double xmax, double ymax, double zmax) {
-    BBOX bbox = {xmin, ymin, zmin, xmax, ymax, zmax};
+    BBOX bbox = {{xmin, ymin, zmin}, {xmax, ymax, zmax}};
+    return bbox;
 }
 
 static
@@ -370,7 +372,7 @@ Octree *createOctree(VertArray *pointCloud,
         int maxLevel,
         float sigma, float radius) {
     Octree *octree = (Octree*) malloc(sizeof(Octree));
-    octree->maxLevel;
+    octree->maxLevel = maxLevel;
     getBoundingBox(&octree->bbox, pointCloud);
     inflateBoundingBox(&octree->bbox, 0.01);
     cubeBoundingBox(&octree->bbox);
@@ -380,7 +382,7 @@ Octree *createOctree(VertArray *pointCloud,
     octree->root->child = NULL;
     subdivide(octree->root, 0, maxLevel, 
             &octree->bbox, &octree->indexBox,
-            &octree->gridHashTable, pointCloud, 
+            octree->gridHashTable, pointCloud, 
             sigma, radius);
     return octree;
 }
@@ -486,7 +488,7 @@ double cubicRootFinder(double C[4], double tin, double tout) {
     //
     if (fabs(C[0]) <= 0) {
         if (fabs(C[1]) <= 0) {
-            if (fabs(C[2] <= 0))  
+            if (fabs(C[2]) <= 0)  
                 return -1;  // constant -- no root
             double t = C[3]/C[2];
             if (tin <= t && t <= tout) return t; // linear -- one root
@@ -608,7 +610,7 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
                 for (int i = 0; i < 2; i++) {
 
                     if (node->child[n] != NULL) {
-                        BBOX cbox = {X[i], Y[j], Z[k], X[i+1], Y[j+1], Z[k+1]};
+                        BBOX cbox = {{X[i], Y[j], Z[k]}, {X[i+1], Y[j+1], Z[k+1]}};
                         double tchild[2];
                         if (rayHitsBoundingBox(&cbox, rayOrg, rayDir, tchild)) {
                             assert(tchild[0] >= 0.0);
@@ -617,7 +619,7 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
                                     {tchild[0], tchild[1]},
                                     n,
                                     cbox,
-                                    {I[i], J[j], K[k], I[i+1], J[j+1], K[k+1]}
+                                    {{I[i], J[j], K[k]}, {I[i+1], J[j+1], K[k+1]}}
                                 };
                                 childInfo[numChildren++] = cinfo;
                             }
@@ -669,7 +671,7 @@ VertArray *readPLY(const char *fname) {
         return NULL;
     }
     while (fgets(buf, sizeof(buf), f) != NULL && 
-        strncmp("element vertex", 14) != 0)
+        strncmp("element vertex", buf, 14) != 0)
         ;
     int numVerts = 0;
     if (sscanf(buf + 14, "%d", &numVerts) != 1 || numVerts < 1) {
@@ -709,9 +711,9 @@ VertArray *readPLY(const char *fname) {
             return NULL;
         }
         Vert vert = {
-            pos[0], pos[1], pos[2],
-            color[0]/255.0, color[1]/255.0, color[2]/255.0, color[3]/255.0,
-            normal[0], normal[1], normal[2]
+            {pos[0], pos[1], pos[2]},
+            {color[0]/255.0, color[1]/255.0, color[2]/255.0}, 
+            {normal[0], normal[1], normal[2]}
         };
         addVert(pointCloud, &vert);
     }

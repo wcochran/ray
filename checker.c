@@ -9,9 +9,9 @@ static void color(struct OBJECT *this,
 		  double color[3]) {
   const double n = noise3(hitPoint[0],hitPoint[1],hitPoint[2]);
   const double t = turbulence3(hitPoint[0],hitPoint[1],hitPoint[2],8);
-  const int i = (int) (6*n*sin(hitPoint[0]));
-  const int j = (int) (0.5*hitPoint[1]);
-  const int k = (int) (3*hitPoint[2]);
+  // const int i = (int) (6*n*sin(hitPoint[0]));
+  // const int j = (int) (0.5*hitPoint[1]);
+  // const int k = (int) (3*hitPoint[2]);
   static double color0[3] = {0, 0, 1};
   static double color1[3] = {0.9, 0.8, 0};
   static double color2[3] = {0, 0.4, 1};
