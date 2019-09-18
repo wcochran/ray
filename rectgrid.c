@@ -72,7 +72,7 @@ double rayHit(OBJECT *this, double rayOrg[3], double rayDir[3],
   /*
    * Cache widely used grid data.
    */
-  W = grid->W, H = grid->H;
+  W = grid->W; H = grid->H;
   xorg = grid->bbox.min.x;
   yorg = grid->bbox.min.y;
   dx = (grid->bbox.max.x - xorg)/(W-1);
@@ -438,7 +438,7 @@ OBJECT *createSurfaceSupportedByRectangularGrid(int W, int H,
     exit(-1);
   }
 
-  grid->W = W, grid->H = H;
+grid->W = W; grid->H = H;
   grid->rowStride = rowStride;
   grid->z = z;
   grid->bbox.min.x = orgx;
@@ -611,10 +611,11 @@ void mapImageToSurfaceSupportedByRectangularGrid(OBJECT *obj,
   gridImage->org[0] = xyorg[0];
   gridImage->org[1] = xyorg[1];
   mag = sqrt(yaxis[0]*yaxis[0] + yaxis[1]*yaxis[1]);
-  if (mag > 0.0)
-    gridImage->y[0] = yaxis[0]/mag, gridImage->y[1] = yaxis[1]/mag;
-  else
-    gridImage->y[0] = 1.0, gridImage->y[1] = 0.0; /* caller a dope! */
+  if (mag > 0.0) {
+      gridImage->y[0] = yaxis[0]/mag; gridImage->y[1] = yaxis[1]/mag;
+  } else {
+      gridImage->y[0] = 1.0; gridImage->y[1] = 0.0; /* caller a dope! */
+  }
   gridImage->x[0] = gridImage->y[1];
   gridImage->x[1] = -gridImage->y[0];
   gridImage->width = width;

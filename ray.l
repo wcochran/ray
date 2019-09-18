@@ -7,6 +7,7 @@ int lineno;         /* lineno and yyin initialized in ray.yl */
 char *stripq(char *s);
 %}
 %option nounput
+%option noyywrap
 %%
 [0-9]+                              {yylval.i = atoi(yytext); return INT;}
 [0-9]+[\.][0-9]*                    {yylval.d = atof(yytext); return REAL;}
@@ -44,7 +45,7 @@ BILINEARRIS                         {return BILINEARRIS;}
 HERMITERIS                          {return HERMITERIS;}
 SUPERELLIPSOID                      {return SUPERELLIPSOID;}
 POINTCLOUD                          {return POINTCLOUD;}
-[,=\(\)\{\}\+\-\*\/]                {return yytext[0];}
+[,=\(\)\{\}\+\-\*\^\/]                {return yytext[0];}
 \".*\"                              {yylval.s = stripq(yytext); return STR;}
 [a-zA-Z\_][a-zA-Z0-9\_]*            {yylval.s = strdup(yytext); return IDENT;}
 [ \t\r]                             { ; }

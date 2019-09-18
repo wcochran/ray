@@ -123,12 +123,12 @@ static double rayHit(struct OBJECT *this,
   return (*data->old->rayHit)(data->old, rayOrg, rayDir, info);
 }
 
-void normal(struct OBJECT *this,
+static void normal(struct OBJECT *this,
 	    double hitPoint[3],
 	    HIT_INFO *info,
-	    double normal[3]) {
+	    double norm[3]) {
   MARBLE_DATA *data = (MARBLE_DATA *) this->data;
-  (*data->old->normal)(data->old, hitPoint, info, normal);
+  (*data->old->normal)(data->old, hitPoint, info, norm);
 }
 
 static void color(struct OBJECT *this,

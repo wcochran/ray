@@ -4,7 +4,7 @@
 # BBMIN = (-0.0946899, 0.0329874, -0.0618736)
 # BBMAX = (0.0610091, 0.187321, 0.0587997)
 # BBCENTER = (-0.0168404, 0.1101542, -0.00153695)
-# DIAG=0.2502460469674796
+DIAG=0.2502460469674796
 
 LOOKAT  = (0.039450, 0.188398, 0.282868),         # eye
           (-0.0168404, 0.1101542, -0.00153695),   # lookat
@@ -21,4 +21,7 @@ KS = 0.0                                  # material specular reflection coeff
 KT = 0.0                                  # material transmission coeff
 NI = 1.52                                 # material index of refraction
 PHONG = 10                                # material shininess
-POINTCLOUD="point-cloud/bunnywithnormals.ply", 5, 0.001
+MAXLEVEL = 5
+#SIGMA = DIAG/(2^MAXLEVEL)
+SIGMA = 0.02
+POINTCLOUD="point-cloud/bunnywithnormals.ply", MAXLEVEL, SIGMA

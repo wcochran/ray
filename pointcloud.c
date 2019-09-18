@@ -139,7 +139,7 @@ VertArray *vertsInsideExpandedBBox(VertArray *inputVertArray, BBOX *bbox, double
         Vert *vert = &inputVertArray->verts[i];
         if (bbox->min.x - r <= vert->pos.x && vert->pos.x < bbox->max.x + r &&
             bbox->min.y - r <= vert->pos.y && vert->pos.y < bbox->max.y + r &&
-            bbox->min.z - r <= vert->pos.z && vert->pos.z < bbox->max.y + r) {
+            bbox->min.z - r <= vert->pos.z && vert->pos.z < bbox->max.z + r) {
             if (vertArray == NULL) {
                 vertArray = createVertArray(0, 10);
             }
@@ -185,6 +185,11 @@ double signedDistanceFunction(VertArray *verts, POINT3 *P, POINT3 *N, double col
     N->x = scale*weightN.x;
     N->y = scale*weightN.y;
     N->z = scale*weightN.z;
+    const double mag2 = N->x*N->x + N->y*N->y + N->z*N->z; // renormalize N
+    const double s = mag2 > 0 ? 1/sqrt(mag2) : 1;
+    N->x *= s;
+    N->y *= s;
+    N->z *= s;
     color[0] = scale*weightColor[0];
     color[1] = scale*weightColor[1];
     color[2] = scale*weightColor[2];
@@ -280,8 +285,8 @@ void subdivide(OctreeNode *node, int level, int maxLevel,
         childIndexBox.min.k = K[k];
         childIndexBox.max.k = K[k+1];
         for (int j = 0; j < 2; j++) {
-            childBBox.min.y = Y[k];
-            childBBox.max.y = Y[k+1];
+            childBBox.min.y = Y[j];
+            childBBox.max.y = Y[j+1];
             childIndexBox.min.j = J[j];
             childIndexBox.max.j = J[j+1];
             for (int i = 0; i < 2; i++) {
@@ -380,7 +385,7 @@ Octree *createOctree(VertArray *pointCloud,
     octree->gridHashTable = createGridHashTable(10003);
     octree->root = (OctreeNode*) malloc(sizeof(OctreeNode));
     octree->root->child = NULL;
-    subdivide(octree->root, 0, maxLevel, 
+    subdivide(octree->root, 1, maxLevel,
             &octree->bbox, &octree->indexBox,
             octree->gridHashTable, pointCloud, 
             sigma, radius);
@@ -391,6 +396,20 @@ Octree *createOctree(VertArray *pointCloud,
 // Convert ray from "world coordinates" to 
 // "unit bounding box coordinates."
 //
+// Let (x0,y0,z0) = bbox->min, (x1,y1,z1) = bbox->max
+// Given a point P = (x,y,z), the point U relative to the box is
+// U = ((x - x0)/(x1 - x0), (y - y0)/(y1 - y0), (z - z0)/(z1 - z0)).
+//
+// Let R(t) = a + bt be a point on the ray at a distance t
+// where a = rayOrg, b = rayDir. The corresponding point U(t) is
+//    U(t) = ((ax + bx*t - x0)/(x1 - x0), ...)
+//         = ((ax - x0)/(x1 - x0) + bx/(x1 - x0)*t, ....)
+// So the normalized ray is U(t) = A + B*t where
+//    Ax = (ax - x0)/(x1 - x0), Bx = bx/(x1 - x0)
+// and similarly for Ay,By and Az,z
+//
+// Note that unitized ray direction no longer has length 1.
+//
 static
 void unitRay(BBOX *bbox, 
         double rayOrg[3], double rayDir[3],
@@ -398,12 +417,13 @@ void unitRay(BBOX *bbox,
     const double sx = 1/(bbox->max.x - bbox->min.x);
     const double sy = 1/(bbox->max.y - bbox->min.y);
     const double sz = 1/(bbox->max.z - bbox->min.z);
+    // note sx = sy = sz if bbox is a cube
     unitRayOrg[0] = (bbox->max.x - rayOrg[0])*sx;
     unitRayOrg[1] = (bbox->max.y - rayOrg[1])*sy;
     unitRayOrg[2] = (bbox->max.z - rayOrg[2])*sz;
-    unitRayDir[0] = (bbox->max.x - rayDir[0])*sx;
-    unitRayDir[1] = (bbox->max.y - rayDir[1])*sy;
-    unitRayDir[2] = (bbox->max.z - rayDir[2])*sz;
+    unitRayDir[0] = rayDir[0]*sx;
+    unitRayDir[1] = rayDir[1]*sy;
+    unitRayDir[2] = rayDir[2]*sz;
 }
 
 //
@@ -415,38 +435,59 @@ void unitRay(BBOX *bbox,
 // See Section 2 of "Fast and Accurate Ray-Voxel Intersection Techniques
 // fir Iso Surface Ray Tracing" by Marmitt, et al 
 // ftp://ftp.mpi-sb.mpg.de/pub/conferences/vmv04/submissions/153/isoisec.pdf
+// https://www.cs.utah.edu/~shirley/papers/iso/iso.pdf
+//
 //
 static
 void rayCubicTrilinearInterpolater(double rayOrg[3], double rayDir[3],
         BBOX *bbox, 
         IndexBox *ibox, GridHashTable *hashTable, // grid information
         double coeff[4]) {
+    assert(ibox->max.i - ibox->min.i == 1); // leafs all at the same bottom level
+    assert(ibox->max.j - ibox->min.j == 1);
+    assert(ibox->max.k - ibox->min.k == 1);
+    
+    //
+    // Convert input ray R(t) to "unit ray" U(t) that yields points
+    // relative to "unit cube."
+    //
     double unitRayOrg[3], unitRayDir[3];
     unitRay(bbox, rayOrg, rayDir, unitRayOrg, unitRayDir);
+    
+    //
+    // We have two rays who components are used as weights
+    // for trilinear interpolation of 8 corner values:
+    //    U0(t) = 1 - (org + dir*t) = (1 - org) + (-dir)*t
+    //    U1(t) = org + dir*t
+    //
+    const double uorg[2] = {1 - unitRayOrg[0], unitRayOrg[0]};
+    const double vorg[2] = {1 - unitRayOrg[1], unitRayOrg[1]};
+    const double worg[2] = {1 - unitRayOrg[2], unitRayOrg[2]};
+    
+    const double udir[2] = {-unitRayDir[0], unitRayDir[0]};
+    const double vdir[2] = {-unitRayDir[1], unitRayDir[1]};
+    const double wdir[2] = {-unitRayDir[2], unitRayDir[2]};
 
-    double uorg[2] = {unitRayOrg[0], 1 - unitRayOrg[0]};
-    double vorg[2] = {unitRayOrg[1], 1 - unitRayOrg[1]};
-    double worg[2] = {unitRayOrg[2], 1 - unitRayOrg[2]};
-
-    double udir[2] = {unitRayDir[0], 1 - unitRayDir[0]};
-    double vdir[2] = {unitRayDir[1], 1 - unitRayDir[1]};
-    double wdir[2] = {unitRayDir[2], 1 - unitRayDir[2]};
-
+    //
+    // Compute coefficients for cubic polynomal that yields
+    // the appropriate interpolatied signed distance value
+    // at each point along the ray.
+    //
     double A = 0, B = 0, C = 0, D = 0;
     for (int k = 0; k < 2; k++)
         for (int j = 0; j < 2; j++)
             for (int i = 0; i < 2; i++) {
-                GridData *g = gridDataLookup(hashTable, // assume at filled leaf
+                GridData *g = gridDataLookup(hashTable, // assume filled leaf
                     ibox->min.i+i, ibox->min.j+j, ibox->min.k+k);
                 assert(g != NULL);
                 double f = g->f;
                 A += udir[i]*vdir[j]*wdir[k]*f;
                 B += (uorg[i]*vdir[j]*wdir[k] + 
-                     udir[i]*vorg[j]*wdir[k] +
-                     udir[i]*vdir[j]*worg[k])*f;
+                      udir[i]*vorg[j]*wdir[k] +
+                      udir[i]*vdir[j]*worg[k])*f;
                 C += (udir[i]*vorg[j]*worg[k] + 
-                     uorg[i]*vdir[j]*worg[k] +
-                     uorg[i]*vorg[j]*wdir[k])*f;
+                      uorg[i]*vdir[j]*worg[k] +
+                      uorg[i]*vorg[j]*wdir[k])*f;
                 D += uorg[i]*vorg[j]*worg[k]*f;
             }
 
@@ -517,7 +558,7 @@ double cubicRootFinder(double C[4], double tin, double tout) {
 
     double droots[2];
     if (quadratic(2*C[1]/(3*C[0]), C[2]/(3*C[0]), droots)) { // has 2 real roots
-        if (droots[0] < droots[1]) { // sort roots in ascending order
+        if (droots[0] > droots[1]) { // sort roots in ascending order
             double tmp = droots[0];
             droots[0] = droots[1];
             droots[1] = tmp;
@@ -568,10 +609,12 @@ typedef struct {    // Child ray intersection info
 //
 // Sorting octree children info on t[0] = smallest ray
 // entry point.
+// https://stackoverflow.com/questions/3886446/problem-trying-to-use-the-c-qsort-function
 //
 int childInfoPtrCompare(const ChildInfo **A, const ChildInfo **B) {
-    double diff = (*A)->t[0] - (*B)->t[0];
-    return signbit(diff);
+    const double fa = (*A)->t[0];
+    const double fb = (*B)->t[0];
+    return (fa > fb) - (fa < fb);
 }
 
 static
@@ -690,7 +733,7 @@ VertArray *readPLY(const char *fname) {
         fclose(f);
         return NULL;
     }
-    fclose(f);
+    
     while (fgets(buf, sizeof(buf), f) != NULL &&
             strncmp("end_header", buf, 8) != 0)
         ;
@@ -717,6 +760,7 @@ VertArray *readPLY(const char *fname) {
         };
         addVert(pointCloud, &vert);
     }
+    fclose(f);
 
     return pointCloud;
 }
@@ -753,15 +797,17 @@ static
 void getTrilinearInterpolationWeights(Octree *octree,
         Index *index, double hitPoint[3],
         double U[2], double V[2], double W[2]) {
-    double dx = (octree->bbox.max.x - octree->bbox.min.x)/octree->maxLevel;
-    double dy = (octree->bbox.max.y - octree->bbox.min.y)/octree->maxLevel;
-    double dz = (octree->bbox.max.z - octree->bbox.min.z)/octree->maxLevel;
-    double x0 = index->i*dx + octree->bbox.min.x;
-    double y0 = index->j*dy + octree->bbox.min.y;
-    double z0 = index->k*dz + octree->bbox.min.z;
-    double u = (hitPoint[0] - x0)/dx;
-    double v = (hitPoint[1] - y0)/dy;
-    double w = (hitPoint[2] - z0)/dz;
+    const int M = 1 << octree->maxLevel;
+    const double dx = (octree->bbox.max.x - octree->bbox.min.x)/M;
+    const double dy = (octree->bbox.max.y - octree->bbox.min.y)/M;
+    const double dz = (octree->bbox.max.z - octree->bbox.min.z)/M;
+    // if bbox a cube then dx = dy = dz
+    const double x0 = index->i*dx + octree->bbox.min.x;
+    const double y0 = index->j*dy + octree->bbox.min.y;
+    const double z0 = index->k*dz + octree->bbox.min.z;
+    const double u = (hitPoint[0] - x0)/dx;
+    const double v = (hitPoint[1] - y0)/dy;
+    const double w = (hitPoint[2] - z0)/dz;
     U[0] = 1-u; U[1] = u;
     V[0] = 1-v; V[1] = v;
     W[0] = 1-w; W[1] = w;
@@ -799,10 +845,12 @@ void getNormal(struct OBJECT *this,
     for (int k = 0; k < 2; k++)
         for (int j = 0; j < 2; j++)
             for (int i = 0; i < 2; i++) {
-                GridData *g = gridDataLookup(hashTable, i,j,k);
+                GridData *g = gridDataLookup(hashTable,
+                                index.i,index.j,index.k);
                 assert(g != NULL);
+                const double w = U[i]*V[j]*W[k];
                 for (int d = 0; d < 3; d++)
-                    normal[d] += U[i]*V[j]*W[k]*g->normal[d];
+                    normal[d] += w*g->normal[d];
             }
 
     //
@@ -847,12 +895,81 @@ void getColor(struct OBJECT *this,
     for (int k = 0; k < 2; k++)
         for (int j = 0; j < 2; j++)
             for (int i = 0; i < 2; i++) {
-                GridData *g = gridDataLookup(hashTable, i,j,k);
+                GridData *g = gridDataLookup(hashTable,
+                                index.i,index.j,index.k);
                 assert(g != NULL);
+                const double w = U[i]*V[j]*W[k];
                 for (int d = 0; d < 3; d++)
-                    color[d] += U[i]*V[j]*W[k]*g->color[d];
+                    color[d] += w*g->color[d];
             }
 }
+
+static
+void setColor(OBJECT *this, double color[3]) {
+ // XXX    POINTCLOUD_DATA *data = (POINTCLOUD_DATA *) this->data;
+}
+
+//typedef struct {
+//    Vec3 point;
+//    double distance;
+//} PointDist;
+//
+//typedef struct {
+//    int capacity;
+//    int num;
+//    PointDist *points;
+//} PointDistArray;
+//
+//static
+//PointDistArray *createPointDistArray(int maxCapacity) {
+//    PointDistArray *array = (PointDistArray*) malloc(sizeof(PointDistArray));
+//    array->capacity = maxCapacity;
+//    array->num = 0;
+//    array->points = (PointDist*) calloc(maxCapacity, sizeof(PointDist));
+//    return array;
+//}
+//
+//static
+//void destroyPointDistanceArray(PointDistArray *array) {
+//    free(array->points);
+//    free(array);
+//}
+//
+//static
+//void insertPointDistance(PointDistArray *array, Vec3 *point, double distance) {
+//    const int N = array->num;
+//    const int C = array->capacity;
+//    int i = 0;
+//    while (i < N && array->points[i].distance <= distance)
+//        i++;
+//    if (i < C) {
+//        int L = N;
+//        if (L > C-1)
+//            L = C-1;
+//        for (int j = L; j > i; --j)
+//            array->points[j] = array->points[j-1];
+//        array->points[i].point = *point;
+//        array->points[i].distance = distance;
+//        if (N < C)
+//            array->num++;
+//    }
+//}
+//
+//static
+//void nearestNeighborsAux(OctreeNode *node, IndexBox *ibox, int level, int maxLevel) {
+//    
+//}
+
+//static
+//double meanDistanceBetweenPoints(VertArray *pointCloud, double *stdev) {
+//    const int numPoints = pointCloud->num;
+//    double dist = 0;
+//    double dist2 = 0;
+//    for (int i = 0; i < n; i++) {
+//        const Vert *vert = pointCloud->verts[i];
+//
+//    }
+//}
 
 OBJECT *createPointCloudObject(const char *plyfile, int maxLevel, float sigma) {
     VertArray *pointcloud = readPLY(plyfile);
@@ -870,7 +987,7 @@ OBJECT *createPointCloudObject(const char *plyfile, int maxLevel, float sigma) {
     object->rayHit = rayHit;
     object->normal = getNormal;
     object->color = getColor;
-    object->setColor = NULL;
+    object->setColor = setColor;
     
     object->ka = 0.1;
     object->kd = 0.80;

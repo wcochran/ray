@@ -116,6 +116,7 @@ int yydebug=1;
 %token SUPERELLIPSOID POINTCLOUD
 %left '+' '-'
 %left '*' '/'
+%right '^'
 %right UMINUS
 %type <d> expr num
 %type <v> vec pair
@@ -225,6 +226,7 @@ expr       : IDENT                      {$$ = lookupVariable($1); free($1);}
            | expr '-' expr              {$$ = $1 - $3;}
            | expr '*' expr              {$$ = $1 * $3;}
            | expr '/' expr              {$$ = $1 / $3;}
+           | expr '^' expr              {$$ = pow($1,$3);}
            | SIN '(' expr ')'           {$$ = sin($3);}
            | COS '(' expr ')'           {$$ = cos($3);}
            | TAN '(' expr ')'           {$$ = tan($3);}

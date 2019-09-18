@@ -33,7 +33,7 @@ void traceray(double rayOrg[3],      /* ray origin */
 	      double color[3])       /* return RGB color intensities */
 {                                    /* these values are *not* clamped */
   int i;
-  double mint, cosi;
+  double mint = 0, cosi;
   OBJECT *obj;
   double hit[3], normal[3];
   HIT_INFO hitInfo;

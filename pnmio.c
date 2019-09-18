@@ -93,7 +93,7 @@ pnm_image *allocate_ppm_image(int nr,int nc)
 
 pnm_image *read_pnm_image_from_file(char *filename)
 {
- int l=strlen(filename);
+ int l=(int)strlen(filename);
  FILE *fp;
  char cmd[256];
  pnm_image *im;
