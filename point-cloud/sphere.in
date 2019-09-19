@@ -1,0 +1,28 @@
+#
+# Sphere
+#
+
+LOOKAT  =  (3,3,3),         # eye
+          (0,0,0),   # lookat
+          (0,1,0)        # up
+#LOOKAT  =  (10, 0.0625, 0), # (-10, 0.0625, 0),         # eye
+#           ( 0, 0.0625, 0),   # lookat
+#           ( 0, 1, 0)        # up
+PROJECTION = 40, 1                        # fovy, aspect
+#IMAGE = "pc.ppm", 64, 64, 1          # name, w, h, sqrt(samples/pixel)
+IMAGE = "pcsphere.ppm", 101, 101, 1          # name, w, h, sqrt(samples/pixel)
+#IMAGE = "pcsphere.ppm", 512, 512, 1          # name, w, h, sqrt(samples/pixel)
+RECURSEDEPTH = 1                          # recursion depth
+AMBIENT = (0.1, 0.1, 0.1)                 # ambient light in scene
+#BACKGROUND = (0, 0.1, 0.6)                # background color
+BACKGROUND = (0, 0, 0)                # background color
+LIGHT = (100, 100, 10), (1, 1, 1), 1, 0, 0  # position, color, attenuation
+KA = 0.2                                  # material ambient reflection coeff
+KD = 0.8                                  # material diffuse reflection coeff
+KS = 0.0                                  # material specular reflection coeff
+KT = 0.0                                  # material transmission coeff
+NI = 1.52                                 # material index of refraction
+PHONG = 10                                # material shininess
+MAXLEVEL = 7
+SIGMA = 0.08
+POINTCLOUD="point-cloud/sphere.ply", MAXLEVEL, SIGMA
