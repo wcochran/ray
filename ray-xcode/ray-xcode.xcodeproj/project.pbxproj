@@ -1,0 +1,447 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		55CC811E23316F4900749F67 /* hermite.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC810923316F4800749F67 /* hermite.c */; };
+		55CC811F23316F4900749F67 /* bezier3.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC810A23316F4800749F67 /* bezier3.c */; };
+		55CC812023316F4900749F67 /* hermitefis.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC810B23316F4900749F67 /* hermitefis.c */; };
+		55CC812123316F4900749F67 /* bilinear.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC810C23316F4900749F67 /* bilinear.c */; };
+		55CC812323316F4900749F67 /* func2.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC810F23316F4900749F67 /* func2.c */; };
+		55CC812423316F4900749F67 /* checker.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC811123316F4900749F67 /* checker.c */; };
+		55CC812523316F4900749F67 /* gfis.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC811423316F4900749F67 /* gfis.c */; };
+		55CC812623316F4900749F67 /* bezfunc.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC811723316F4900749F67 /* bezfunc.c */; };
+		55CC812723316F4900749F67 /* bbox.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC811823316F4900749F67 /* bbox.c */; };
+		55CC812823316F4900749F67 /* bilinearfis.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC811923316F4900749F67 /* bilinearfis.c */; };
+		55CC812923316F4900749F67 /* fis.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC811A23316F4900749F67 /* fis.c */; };
+		55CC813523316F5C00749F67 /* pnmio.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC812A23316F5B00749F67 /* pnmio.c */; };
+		55CC813623316F5C00749F67 /* linear.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC812B23316F5B00749F67 /* linear.c */; };
+		55CC813723316F5C00749F67 /* noise.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC812C23316F5B00749F67 /* noise.c */; };
+		55CC813823316F5C00749F67 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 55CC813023316F5C00749F67 /* Makefile */; };
+		55CC813923316F5C00749F67 /* marble.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC813123316F5C00749F67 /* marble.c */; };
+		55CC813A23316F5C00749F67 /* plane.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC813323316F5C00749F67 /* plane.c */; };
+		55CC813F23316F8B00749F67 /* polygon.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC813C23316F8B00749F67 /* polygon.c */; };
+		55CC814023316F8B00749F67 /* pointcloud.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC813E23316F8B00749F67 /* pointcloud.c */; };
+		55CC814523316F9800749F67 /* raytrace.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC814223316F9700749F67 /* raytrace.c */; };
+		55CC814623316F9800749F67 /* ray.l in Sources */ = {isa = PBXBuildFile; fileRef = 55CC814323316F9700749F67 /* ray.l */; };
+		55CC814723316F9800749F67 /* ray.y in Sources */ = {isa = PBXBuildFile; fileRef = 55CC814423316F9800749F67 /* ray.y */; };
+		55CC815123316FA500749F67 /* ris.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC814823316FA400749F67 /* ris.c */; };
+		55CC815323316FA500749F67 /* rectfis.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC814B23316FA400749F67 /* rectfis.c */; };
+		55CC815423316FA500749F67 /* sphere.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC814F23316FA400749F67 /* sphere.c */; };
+		55CC815523316FA500749F67 /* rectgrid.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC815023316FA500749F67 /* rectgrid.c */; };
+		55CC816023316FB100749F67 /* teapot.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC815623316FB000749F67 /* teapot.c */; };
+		55CC816123316FB100749F67 /* unimodalroot.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC815A23316FB100749F67 /* unimodalroot.c */; };
+		55CC816223316FB100749F67 /* superellipsoid.c in Sources */ = {isa = PBXBuildFile; fileRef = 55CC815B23316FB100749F67 /* superellipsoid.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		55CC80FB23316F2500749F67 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		55CC80FD23316F2500749F67 /* ray-xcode */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "ray-xcode"; sourceTree = BUILT_PRODUCTS_DIR; };
+		55CC810723316F4800749F67 /* checker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = checker.h; path = ../../checker.h; sourceTree = "<group>"; };
+		55CC810823316F4800749F67 /* fis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fis.h; path = ../../fis.h; sourceTree = "<group>"; };
+		55CC810923316F4800749F67 /* hermite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hermite.c; path = ../../hermite.c; sourceTree = "<group>"; };
+		55CC810A23316F4800749F67 /* bezier3.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bezier3.c; path = ../../bezier3.c; sourceTree = "<group>"; };
+		55CC810B23316F4900749F67 /* hermitefis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = hermitefis.c; path = ../../hermitefis.c; sourceTree = "<group>"; };
+		55CC810C23316F4900749F67 /* bilinear.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bilinear.c; path = ../../bilinear.c; sourceTree = "<group>"; };
+		55CC810E23316F4900749F67 /* hermitefis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hermitefis.h; path = ../../hermitefis.h; sourceTree = "<group>"; };
+		55CC810F23316F4900749F67 /* func2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = func2.c; path = ../../func2.c; sourceTree = "<group>"; };
+		55CC811023316F4900749F67 /* bbox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bbox.h; path = ../../bbox.h; sourceTree = "<group>"; };
+		55CC811123316F4900749F67 /* checker.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = checker.c; path = ../../checker.c; sourceTree = "<group>"; };
+		55CC811223316F4900749F67 /* func2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = func2.h; path = ../../func2.h; sourceTree = "<group>"; };
+		55CC811323316F4900749F67 /* bezfunc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bezfunc.h; path = ../../bezfunc.h; sourceTree = "<group>"; };
+		55CC811423316F4900749F67 /* gfis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gfis.c; path = ../../gfis.c; sourceTree = "<group>"; };
+		55CC811523316F4900749F67 /* gfis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gfis.h; path = ../../gfis.h; sourceTree = "<group>"; };
+		55CC811623316F4900749F67 /* hermite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hermite.h; path = ../../hermite.h; sourceTree = "<group>"; };
+		55CC811723316F4900749F67 /* bezfunc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bezfunc.c; path = ../../bezfunc.c; sourceTree = "<group>"; };
+		55CC811823316F4900749F67 /* bbox.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bbox.c; path = ../../bbox.c; sourceTree = "<group>"; };
+		55CC811923316F4900749F67 /* bilinearfis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bilinearfis.c; path = ../../bilinearfis.c; sourceTree = "<group>"; };
+		55CC811A23316F4900749F67 /* fis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fis.c; path = ../../fis.c; sourceTree = "<group>"; };
+		55CC811B23316F4900749F67 /* bilinearfis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bilinearfis.h; path = ../../bilinearfis.h; sourceTree = "<group>"; };
+		55CC811C23316F4900749F67 /* bezier3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bezier3.h; path = ../../bezier3.h; sourceTree = "<group>"; };
+		55CC811D23316F4900749F67 /* bilinear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bilinear.h; path = ../../bilinear.h; sourceTree = "<group>"; };
+		55CC812A23316F5B00749F67 /* pnmio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pnmio.c; path = ../../pnmio.c; sourceTree = "<group>"; };
+		55CC812B23316F5B00749F67 /* linear.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = linear.c; path = ../../linear.c; sourceTree = "<group>"; };
+		55CC812C23316F5B00749F67 /* noise.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = noise.c; path = ../../noise.c; sourceTree = "<group>"; };
+		55CC812D23316F5B00749F67 /* linear.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = linear.h; path = ../../linear.h; sourceTree = "<group>"; };
+		55CC812E23316F5B00749F67 /* marble.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = marble.h; path = ../../marble.h; sourceTree = "<group>"; };
+		55CC812F23316F5B00749F67 /* pnmio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pnmio.h; path = ../../pnmio.h; sourceTree = "<group>"; };
+		55CC813023316F5C00749F67 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = ../../Makefile; sourceTree = "<group>"; };
+		55CC813123316F5C00749F67 /* marble.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = marble.c; path = ../../marble.c; sourceTree = "<group>"; };
+		55CC813223316F5C00749F67 /* noise.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = noise.h; path = ../../noise.h; sourceTree = "<group>"; };
+		55CC813323316F5C00749F67 /* plane.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = plane.c; path = ../../plane.c; sourceTree = "<group>"; };
+		55CC813423316F5C00749F67 /* plane.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = plane.h; path = ../../plane.h; sourceTree = "<group>"; };
+		55CC813B23316F8B00749F67 /* pointcloud.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pointcloud.h; path = ../../pointcloud.h; sourceTree = "<group>"; };
+		55CC813C23316F8B00749F67 /* polygon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = polygon.c; path = ../../polygon.c; sourceTree = "<group>"; };
+		55CC813D23316F8B00749F67 /* polygon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = polygon.h; path = ../../polygon.h; sourceTree = "<group>"; };
+		55CC813E23316F8B00749F67 /* pointcloud.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pointcloud.c; path = ../../pointcloud.c; sourceTree = "<group>"; };
+		55CC814123316F9700749F67 /* raytrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = raytrace.h; path = ../../raytrace.h; sourceTree = "<group>"; };
+		55CC814223316F9700749F67 /* raytrace.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = raytrace.c; path = ../../raytrace.c; sourceTree = "<group>"; };
+		55CC814323316F9700749F67 /* ray.l */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.lex; name = ray.l; path = ../../ray.l; sourceTree = "<group>"; };
+		55CC814423316F9800749F67 /* ray.y */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.yacc; name = ray.y; path = ../../ray.y; sourceTree = "<group>"; };
+		55CC814823316FA400749F67 /* ris.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ris.c; path = ../../ris.c; sourceTree = "<group>"; };
+		55CC814923316FA400749F67 /* rectfis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rectfis.h; path = ../../rectfis.h; sourceTree = "<group>"; };
+		55CC814B23316FA400749F67 /* rectfis.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rectfis.c; path = ../../rectfis.c; sourceTree = "<group>"; };
+		55CC814C23316FA400749F67 /* ris.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ris.h; path = ../../ris.h; sourceTree = "<group>"; };
+		55CC814D23316FA400749F67 /* rectgrid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = rectgrid.h; path = ../../rectgrid.h; sourceTree = "<group>"; };
+		55CC814E23316FA400749F67 /* sphere.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sphere.h; path = ../../sphere.h; sourceTree = "<group>"; };
+		55CC814F23316FA400749F67 /* sphere.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sphere.c; path = ../../sphere.c; sourceTree = "<group>"; };
+		55CC815023316FA500749F67 /* rectgrid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = rectgrid.c; path = ../../rectgrid.c; sourceTree = "<group>"; };
+		55CC815623316FB000749F67 /* teapot.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = teapot.c; path = ../../teapot.c; sourceTree = "<group>"; };
+		55CC815723316FB100749F67 /* superellipsoid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = superellipsoid.h; path = ../../superellipsoid.h; sourceTree = "<group>"; };
+		55CC815823316FB100749F67 /* trim.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = trim.h; path = ../../trim.h; sourceTree = "<group>"; };
+		55CC815923316FB100749F67 /* unimodalroot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = unimodalroot.h; path = ../../unimodalroot.h; sourceTree = "<group>"; };
+		55CC815A23316FB100749F67 /* unimodalroot.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = unimodalroot.c; path = ../../unimodalroot.c; sourceTree = "<group>"; };
+		55CC815B23316FB100749F67 /* superellipsoid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = superellipsoid.c; path = ../../superellipsoid.c; sourceTree = "<group>"; };
+		55CC815F23316FB100749F67 /* teapot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = teapot.h; path = ../../teapot.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		55CC80FA23316F2500749F67 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		55CC80F423316F2500749F67 = {
+			isa = PBXGroup;
+			children = (
+				55CC80FF23316F2500749F67 /* ray-xcode */,
+				55CC80FE23316F2500749F67 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		55CC80FE23316F2500749F67 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				55CC80FD23316F2500749F67 /* ray-xcode */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		55CC80FF23316F2500749F67 /* ray-xcode */ = {
+			isa = PBXGroup;
+			children = (
+				55CC811823316F4900749F67 /* bbox.c */,
+				55CC811023316F4900749F67 /* bbox.h */,
+				55CC811723316F4900749F67 /* bezfunc.c */,
+				55CC811323316F4900749F67 /* bezfunc.h */,
+				55CC810A23316F4800749F67 /* bezier3.c */,
+				55CC811C23316F4900749F67 /* bezier3.h */,
+				55CC810C23316F4900749F67 /* bilinear.c */,
+				55CC811D23316F4900749F67 /* bilinear.h */,
+				55CC811923316F4900749F67 /* bilinearfis.c */,
+				55CC811B23316F4900749F67 /* bilinearfis.h */,
+				55CC811123316F4900749F67 /* checker.c */,
+				55CC810723316F4800749F67 /* checker.h */,
+				55CC811A23316F4900749F67 /* fis.c */,
+				55CC810823316F4800749F67 /* fis.h */,
+				55CC810F23316F4900749F67 /* func2.c */,
+				55CC811223316F4900749F67 /* func2.h */,
+				55CC811423316F4900749F67 /* gfis.c */,
+				55CC811523316F4900749F67 /* gfis.h */,
+				55CC810923316F4800749F67 /* hermite.c */,
+				55CC811623316F4900749F67 /* hermite.h */,
+				55CC812B23316F5B00749F67 /* linear.c */,
+				55CC812D23316F5B00749F67 /* linear.h */,
+				55CC813023316F5C00749F67 /* Makefile */,
+				55CC813123316F5C00749F67 /* marble.c */,
+				55CC812E23316F5B00749F67 /* marble.h */,
+				55CC812C23316F5B00749F67 /* noise.c */,
+				55CC813223316F5C00749F67 /* noise.h */,
+				55CC813323316F5C00749F67 /* plane.c */,
+				55CC813423316F5C00749F67 /* plane.h */,
+				55CC812A23316F5B00749F67 /* pnmio.c */,
+				55CC812F23316F5B00749F67 /* pnmio.h */,
+				55CC810B23316F4900749F67 /* hermitefis.c */,
+				55CC810E23316F4900749F67 /* hermitefis.h */,
+				55CC813E23316F8B00749F67 /* pointcloud.c */,
+				55CC813B23316F8B00749F67 /* pointcloud.h */,
+				55CC813C23316F8B00749F67 /* polygon.c */,
+				55CC813D23316F8B00749F67 /* polygon.h */,
+				55CC815B23316FB100749F67 /* superellipsoid.c */,
+				55CC815723316FB100749F67 /* superellipsoid.h */,
+				55CC815623316FB000749F67 /* teapot.c */,
+				55CC815F23316FB100749F67 /* teapot.h */,
+				55CC815823316FB100749F67 /* trim.h */,
+				55CC815A23316FB100749F67 /* unimodalroot.c */,
+				55CC815923316FB100749F67 /* unimodalroot.h */,
+				55CC814323316F9700749F67 /* ray.l */,
+				55CC814423316F9800749F67 /* ray.y */,
+				55CC814223316F9700749F67 /* raytrace.c */,
+				55CC814123316F9700749F67 /* raytrace.h */,
+				55CC814B23316FA400749F67 /* rectfis.c */,
+				55CC814923316FA400749F67 /* rectfis.h */,
+				55CC815023316FA500749F67 /* rectgrid.c */,
+				55CC814D23316FA400749F67 /* rectgrid.h */,
+				55CC814823316FA400749F67 /* ris.c */,
+				55CC814C23316FA400749F67 /* ris.h */,
+				55CC814F23316FA400749F67 /* sphere.c */,
+				55CC814E23316FA400749F67 /* sphere.h */,
+			);
+			path = "ray-xcode";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		55CC80FC23316F2500749F67 /* ray-xcode */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 55CC810423316F2500749F67 /* Build configuration list for PBXNativeTarget "ray-xcode" */;
+			buildPhases = (
+				55CC80F923316F2500749F67 /* Sources */,
+				55CC80FA23316F2500749F67 /* Frameworks */,
+				55CC80FB23316F2500749F67 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ray-xcode";
+			productName = "ray-xcode";
+			productReference = 55CC80FD23316F2500749F67 /* ray-xcode */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		55CC80F523316F2500749F67 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1030;
+				ORGANIZATIONNAME = Intel;
+				TargetAttributes = {
+					55CC80FC23316F2500749F67 = {
+						CreatedOnToolsVersion = 10.3;
+					};
+				};
+			};
+			buildConfigurationList = 55CC80F823316F2500749F67 /* Build configuration list for PBXProject "ray-xcode" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 55CC80F423316F2500749F67;
+			productRefGroup = 55CC80FE23316F2500749F67 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				55CC80FC23316F2500749F67 /* ray-xcode */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		55CC80F923316F2500749F67 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				55CC813623316F5C00749F67 /* linear.c in Sources */,
+				55CC812923316F4900749F67 /* fis.c in Sources */,
+				55CC815323316FA500749F67 /* rectfis.c in Sources */,
+				55CC813923316F5C00749F67 /* marble.c in Sources */,
+				55CC812723316F4900749F67 /* bbox.c in Sources */,
+				55CC813723316F5C00749F67 /* noise.c in Sources */,
+				55CC812623316F4900749F67 /* bezfunc.c in Sources */,
+				55CC812523316F4900749F67 /* gfis.c in Sources */,
+				55CC813823316F5C00749F67 /* Makefile in Sources */,
+				55CC812323316F4900749F67 /* func2.c in Sources */,
+				55CC813523316F5C00749F67 /* pnmio.c in Sources */,
+				55CC811F23316F4900749F67 /* bezier3.c in Sources */,
+				55CC814623316F9800749F67 /* ray.l in Sources */,
+				55CC815123316FA500749F67 /* ris.c in Sources */,
+				55CC816123316FB100749F67 /* unimodalroot.c in Sources */,
+				55CC812423316F4900749F67 /* checker.c in Sources */,
+				55CC813A23316F5C00749F67 /* plane.c in Sources */,
+				55CC813F23316F8B00749F67 /* polygon.c in Sources */,
+				55CC814023316F8B00749F67 /* pointcloud.c in Sources */,
+				55CC814523316F9800749F67 /* raytrace.c in Sources */,
+				55CC816023316FB100749F67 /* teapot.c in Sources */,
+				55CC812123316F4900749F67 /* bilinear.c in Sources */,
+				55CC812823316F4900749F67 /* bilinearfis.c in Sources */,
+				55CC815523316FA500749F67 /* rectgrid.c in Sources */,
+				55CC816223316FB100749F67 /* superellipsoid.c in Sources */,
+				55CC812023316F4900749F67 /* hermitefis.c in Sources */,
+				55CC815423316FA500749F67 /* sphere.c in Sources */,
+				55CC814723316F9800749F67 /* ray.y in Sources */,
+				55CC811E23316F4900749F67 /* hermite.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		55CC810223316F2500749F67 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		55CC810323316F2500749F67 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		55CC810523316F2500749F67 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				YACCFLAGS = "-d";
+			};
+			name = Debug;
+		};
+		55CC810623316F2500749F67 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				YACCFLAGS = "-d";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		55CC80F823316F2500749F67 /* Build configuration list for PBXProject "ray-xcode" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55CC810223316F2500749F67 /* Debug */,
+				55CC810323316F2500749F67 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		55CC810423316F2500749F67 /* Build configuration list for PBXNativeTarget "ray-xcode" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				55CC810523316F2500749F67 /* Debug */,
+				55CC810623316F2500749F67 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 55CC80F523316F2500749F67 /* Project object */;
+}

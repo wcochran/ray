@@ -389,11 +389,11 @@ Octree *createOctree(VertArray *pointCloud,
         float sigma, float radius) {
     Octree *octree = (Octree*) malloc(sizeof(Octree));
     octree->maxLevel = maxLevel;
-//    getBoundingBox(&octree->bbox, pointCloud);
-//    inflateBoundingBox(&octree->bbox, 0.01);
-//    cubeBoundingBox(&octree->bbox);
-    BBOX unitbbox = {{-1,-1,-1}, {1,1,1}}; // XXX
-    octree->bbox =  unitbbox; // XXX
+    getBoundingBox(&octree->bbox, pointCloud);
+    inflateBoundingBox(&octree->bbox, 0.01);
+    cubeBoundingBox(&octree->bbox);
+//    BBOX unitbbox = {{-1,-1,-1}, {1,1,1}}; // XXX
+//    octree->bbox =  unitbbox; // XXX
     setIndexBox(&octree->indexBox, maxLevel);
     octree->gridHashTable = createGridHashTable(10003);
     octree->root = (OctreeNode*) malloc(sizeof(OctreeNode));
@@ -420,8 +420,8 @@ bool doesFilledLeaveContainSurface(IndexBox *ibox, GridHashTable *hashTable) {
                                      ibox->min.i+i, ibox->min.j+j, ibox->min.k+k);
                 assert(g != NULL);
                 double f = g->f;
-                if (f < -0.0001) negCount++;
-                if (f > +0.0001) posCount++;
+                if (f < 0) negCount++; // XXXX fix hard constant
+                if (f > 0) posCount++;
             }
     return negCount > 0 && posCount > 0;
 }
@@ -452,9 +452,9 @@ void unitRay(BBOX *bbox,
     const double sy = 1/(bbox->max.y - bbox->min.y);
     const double sz = 1/(bbox->max.z - bbox->min.z);
     // note sx = sy = sz if bbox is a cube
-    unitRayOrg[0] = (bbox->max.x - rayOrg[0])*sx;
-    unitRayOrg[1] = (bbox->max.y - rayOrg[1])*sy;
-    unitRayOrg[2] = (bbox->max.z - rayOrg[2])*sz;
+    unitRayOrg[0] = (rayOrg[0] - bbox->min.x)*sx;
+    unitRayOrg[1] = (rayOrg[1] - bbox->min.y)*sy;
+    unitRayOrg[2] = (rayOrg[2] - bbox->min.z)*sz;
     unitRayDir[0] = rayDir[0]*sx;
     unitRayDir[1] = rayDir[1]*sy;
     unitRayDir[2] = rayDir[2]*sz;
@@ -633,49 +633,50 @@ double cubicRootFinder(double C[4], double tin, double tout) {
     return thit;
 }
 
-bool findFilledLeafContainingPoint(double point[3],
-                             OctreeNode *node, BBOX *bbox, IndexBox *ibox,
-                             Index *indexOfPoint) {
-    const bool insideBBox =
-        bbox->min.x <= point[0] && point[0] < bbox->max.x &&
-        bbox->min.y <= point[1] && point[1] < bbox->max.y &&
-        bbox->min.z <= point[2] && point[2] < bbox->max.z;
-    
-    if (!insideBBox) return false;
-    
-    if (node->child == NULL) { // filled leaf
-        return true;
-    } else { // internal node (search child octrees)
-        POINT3 C = bboxCenter(bbox);
-        double X[3] = {bbox->min.x, C.x, bbox->max.x};
-        double Y[3] = {bbox->min.y, C.y, bbox->max.y};
-        double Z[3] = {bbox->min.z, C.z, bbox->max.z};
-        
-        Index centerIndex = IndexBoxCenter(ibox);
-        int I[3] = {ibox->min.i, centerIndex.i, ibox->max.i};
-        int J[3] = {ibox->min.j, centerIndex.j, ibox->max.j};
-        int K[3] = {ibox->min.k, centerIndex.k, ibox->max.k};
-        
-        int n = 0;
-        
-        for (int k = 0; k < 2; k++) {
-            for (int j = 0; j < 2; j++) {
-                for (int i = 0; i < 2; i++) {
-                    if (node->child[n] != NULL) {
-                        BBOX cbox = {{X[i], Y[j], Z[k]}, {X[i+1], Y[j+1], Z[k+1]}};
-                        IndexBox ibox = {{I[i], J[j], K[k]}, {I[i+1], J[j+1], K[k+1]}};
-                        if (findFilledLeafContainingPoint(point, node->child[n],
-                                                    &cbox, &ibox, indexOfPoint)) {
-                            return true;
-                        }
-                    }
-                    n++;
-                }
-            }
-        }
-    }
-    return false;
-}
+//static
+//bool findFilledLeafContainingPoint(double point[3],
+//                             OctreeNode *node, BBOX *bbox, IndexBox *ibox,
+//                             Index *indexOfPoint) {
+//    const bool insideBBox =
+//        bbox->min.x <= point[0] && point[0] < bbox->max.x &&
+//        bbox->min.y <= point[1] && point[1] < bbox->max.y &&
+//        bbox->min.z <= point[2] && point[2] < bbox->max.z;
+//
+//    if (!insideBBox) return false;
+//
+//    if (node->child == NULL) { // filled leaf
+//        return true;
+//    } else { // internal node (search child octrees)
+//        POINT3 C = bboxCenter(bbox);
+//        double X[3] = {bbox->min.x, C.x, bbox->max.x};
+//        double Y[3] = {bbox->min.y, C.y, bbox->max.y};
+//        double Z[3] = {bbox->min.z, C.z, bbox->max.z};
+//
+//        Index centerIndex = IndexBoxCenter(ibox);
+//        int I[3] = {ibox->min.i, centerIndex.i, ibox->max.i};
+//        int J[3] = {ibox->min.j, centerIndex.j, ibox->max.j};
+//        int K[3] = {ibox->min.k, centerIndex.k, ibox->max.k};
+//
+//        int n = 0;
+//
+//        for (int k = 0; k < 2; k++) {
+//            for (int j = 0; j < 2; j++) {
+//                for (int i = 0; i < 2; i++) {
+//                    if (node->child[n] != NULL) {
+//                        BBOX cbox = {{X[i], Y[j], Z[k]}, {X[i+1], Y[j+1], Z[k+1]}};
+//                        IndexBox ibox = {{I[i], J[j], K[k]}, {I[i+1], J[j+1], K[k+1]}};
+//                        if (findFilledLeafContainingPoint(point, node->child[n],
+//                                                    &cbox, &ibox, indexOfPoint)) {
+//                            return true;
+//                        }
+//                    }
+//                    n++;
+//                }
+//            }
+//        }
+//    }
+//    return false;
+//}
 
 typedef struct {    // Child ray intersection info
     double t[2];    // entry / exit ray parameter
@@ -704,14 +705,23 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
     double thit = -1.0;
 
     if (node->child == NULL) {  // filled leaf
-        if (doesFilledLeaveContainSurface(ibox, hashTable))
-            thit = tinterval[0]; // XXXX
-//        double C[4];
-//        rayCubicTrilinearInterpolater(rayOrg, rayDir,
-//            bbox, ibox, hashTable, C);
-//        thit = cubicRootFinder(C, tinterval[0], tinterval[1]);
-        if (thit >= EPSILON) {
-            *hitIndex = ibox->min;
+        if (doesFilledLeaveContainSurface(ibox, hashTable)) {
+// XXX #define USE_BBOX_INDEX_XXX
+#ifdef USE_BBOX_INDEX_XXX
+            if (tinterval[0] >= 0.03) { // XXX 0.03 is big!
+                thit = tinterval[0];
+                *hitIndex = ibox->min;
+            }
+#else
+            double C[4];
+            rayCubicTrilinearInterpolater(rayOrg, rayDir,
+                bbox, ibox, hashTable, C);
+            const double t = cubicRootFinder(C, tinterval[0], tinterval[1]);
+            if (t >= EPSILON) {
+                thit = t;
+                *hitIndex = ibox->min;
+            }
+#endif
         }
     } else { // internal node
         POINT3 C = bboxCenter(bbox);

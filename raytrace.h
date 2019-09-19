@@ -52,7 +52,6 @@ typedef struct {
  * both time consuming and non-reentrant.
  */
 typedef union {
-  int hitFound;      /* surface intersection was determined? */
   struct {
     int nada;        /* sphere has all it needs to know */
   } sphere;
