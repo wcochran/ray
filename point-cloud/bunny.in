@@ -6,22 +6,26 @@
 # BBCENTER = (-0.0168404, 0.1101542, -0.00153695)
 DIAG=0.2502460469674796
 
-LOOKAT  = (0.039450, 0.188398, 0.282868),         # eye
+LOOKAT  = # (0.039450, 0.188398, 0.282868),         # eye
+            (0.039450, 0.5, 0.282868),
           (-0.0168404, 0.1101542, -0.00153695),   # lookat
           (0,1,0)                                 # up
 PROJECTION = 40, 1                        # fovy, aspect
-IMAGE = "pc.ppm", 64, 64, 1          # name, w, h, sqrt(samples/pixel)
+#IMAGE = "pc.ppm", 64, 64, 1          # name, w, h, sqrt(samples/pixel)
+IMAGE = "pc.ppm", 512, 512, 1          # name, w, h, sqrt(samples/pixel)
 RECURSEDEPTH = 1                          # recursion depth
 AMBIENT = (0.1, 0.1, 0.1)                 # ambient light in scene
-BACKGROUND = (0, 0.1, 0.6)                # background color
-LIGHT = (10, 0, 10), (1, 1, 1), 1, 0, 0  # position, color, attenuation
+#BACKGROUND = (0, 0.1, 0.6)                # background color
+BACKGROUND = (0, 0, 0)                # background color
+LIGHT = (10, 10, 10), (1, 1, 1), 1, 0, 0  # position, color, attenuation
 KA = 0.0                                  # material ambient reflection coeff
 KD = 1.0                                  # material diffuse reflection coeff
 KS = 0.0                                  # material specular reflection coeff
 KT = 0.0                                  # material transmission coeff
 NI = 1.52                                 # material index of refraction
 PHONG = 10                                # material shininess
-MAXLEVEL = 5
+MAXLEVEL = 3
 #SIGMA = DIAG/(2^MAXLEVEL)
 SIGMA = 0.02
+#SIGMA = 0.03
 POINTCLOUD="point-cloud/bunnywithnormals.ply", MAXLEVEL, SIGMA

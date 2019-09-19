@@ -143,7 +143,7 @@ VertArray *vertsInsideExpandedBBox(VertArray *inputVertArray, BBOX *bbox, double
             if (vertArray == NULL) {
                 vertArray = createVertArray(0, 10);
             }
-            addVert(vertArray, &inputVertArray->verts[i]);
+            addVert(vertArray, vert);
         }
     }
     return vertArray;
@@ -174,9 +174,9 @@ double signedDistanceFunction(VertArray *verts, POINT3 *P, POINT3 *N, double col
             weightN.x += w*vert->normal.x;
             weightN.y += w*vert->normal.y;
             weightN.z += w*vert->normal.z;
-            weightColor[0] *= w*vert->color.r;
-            weightColor[1] *= w*vert->color.g;
-            weightColor[2] *= w*vert->color.b;
+            weightColor[0] += w*vert->color.r;
+            weightColor[1] += w*vert->color.g;
+            weightColor[2] += w*vert->color.b;
             n++;
         }
     }
@@ -271,6 +271,11 @@ void subdivide(OctreeNode *node, int level, int maxLevel,
     int I[3] = {iBox->min.i, centerIndex.i, iBox->max.i};
     int J[3] = {iBox->min.j, centerIndex.j, iBox->max.j};
     int K[3] = {iBox->min.k, centerIndex.k, iBox->max.k};
+    
+//    // XXX
+//    printf("bbox (%0.4f, %0.4f, %0.4f) - (%0.4f, %0.4f, %0.4f)\n",
+//           bbox->min.x, bbox->min.y, bbox->min.z,
+//           bbox->max.x, bbox->max.y, bbox->max.z);
 
     int n = 0;
 
@@ -294,6 +299,11 @@ void subdivide(OctreeNode *node, int level, int maxLevel,
                 childBBox.max.x = X[i+1];
                 childIndexBox.min.i = I[i];
                 childIndexBox.max.i = I[i+1];
+                
+//                printf("   child bbox %d: (%0.4f, %0.4f, %0.4f) - (%0.4f, %0.4f, %0.4f)\n",
+//                       n,
+//                       childBBox.min.x, childBBox.min.y, childBBox.min.z,
+//                       childBBox.max.x, childBBox.max.y, childBBox.max.z);
 
                 VertArray *childVerts = 
                     vertsInsideExpandedBBox(verts, &childBBox, radius);
@@ -306,7 +316,7 @@ void subdivide(OctreeNode *node, int level, int maxLevel,
                             radius, sigma, hashTable);
                 } else { // internal node;
                     node->child[n] = (OctreeNode*) malloc(sizeof(OctreeNode));
-                    subdivide(node->child[n], level + 1, maxLevel, 
+                    subdivide(node->child[n], level + 1, maxLevel,
                         &childBBox, &childIndexBox, hashTable, childVerts,
                         radius, sigma);
                 }
@@ -318,6 +328,7 @@ void subdivide(OctreeNode *node, int level, int maxLevel,
             }
         }
     }
+    
 }
 
 static
@@ -611,6 +622,7 @@ typedef struct {    // Child ray intersection info
 // entry point.
 // https://stackoverflow.com/questions/3886446/problem-trying-to-use-the-c-qsort-function
 //
+static
 int childInfoPtrCompare(const ChildInfo **A, const ChildInfo **B) {
     const double fa = (*A)->t[0];
     const double fb = (*B)->t[0];
@@ -625,10 +637,11 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
     double thit = -1.0;
 
     if (node->child == NULL) {  // filled leaf
-        double C[4];
-        rayCubicTrilinearInterpolater(rayOrg, rayDir,
-            bbox, ibox, hashTable, C);
-        thit = cubicRootFinder(C, tinterval[0], tinterval[1]);
+        thit = tinterval[0]; // XXXX
+//        double C[4];
+//        rayCubicTrilinearInterpolater(rayOrg, rayDir,
+//            bbox, ibox, hashTable, C);
+//        thit = cubicRootFinder(C, tinterval[0], tinterval[1]);
         if (thit >= EPSILON) {
             *hitIndex = ibox->min;
         }
@@ -648,6 +661,8 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
         int numChildren = 0;
         ChildInfo childInfo[8];
 
+        int childIntersections = 0;
+        
         for (int k = 0; k < 2; k++) {
             for (int j = 0; j < 2; j++) {
                 for (int i = 0; i < 2; i++) {
@@ -656,6 +671,7 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
                         BBOX cbox = {{X[i], Y[j], Z[k]}, {X[i+1], Y[j+1], Z[k+1]}};
                         double tchild[2];
                         if (rayHitsBoundingBox(&cbox, rayOrg, rayDir, tchild)) {
+                            childIntersections++;
                             assert(tchild[0] >= 0.0);
                             if (tchild[0] <= tinterval[1] && tchild[1] >= tinterval[0]) {
                                 ChildInfo cinfo = {
@@ -672,6 +688,25 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
                     n++;
                 }
             }
+        }
+        
+        // XXX assert(childIntersections > 0);
+        // XXX assert(numChildren > 0);
+        if (childIntersections <= 0) {
+            printf("rayOrg = (%f, %f, %f)\n", rayOrg[0], rayOrg[1], rayOrg[2]);
+            printf("rayDir = (%f, %f, %f)\n", rayOrg[0], rayOrg[1], rayOrg[2]);
+            double hitEntry[3], hitExit[3];
+            for (int i = 0; i < 3; i++) {
+                hitEntry[i] = rayOrg[i] + tinterval[0]*rayDir[i];
+                hitExit[i] = rayOrg[i] + tinterval[1]*rayDir[i];
+            }
+            printf("hitEntry = (%f, %f, %f) t=%f\n",
+                   hitEntry[0], hitEntry[1], hitEntry[2], tinterval[0]);
+            printf("hitExit = (%f, %f, %f) t=%f\n",
+                   hitExit[0], hitExit[1], hitExit[2], tinterval[1]);
+            printf("bbox.min = (%f, %f, %f)\n", bbox->min.x, bbox->min.y, bbox->min.z);
+            printf("bbox.max = (%f, %f, %f)\n", bbox->max.x, bbox->max.y, bbox->max.z);
+            // XXX assert(childIntersections > 0);
         }
         
         if (numChildren > 0) {
@@ -900,7 +935,7 @@ void getColor(struct OBJECT *this,
                 assert(g != NULL);
                 const double w = U[i]*V[j]*W[k];
                 for (int d = 0; d < 3; d++)
-                    color[d] += w*g->color[d];
+                    color[d] += w*g->color[d]/255.0; // convert from 8-bit
             }
 }
 

@@ -375,8 +375,8 @@ raytrace(
       double x,y;
       double sumColor[3];
 
-      if (i == 89 && j == 36)
-	x = 0.0;
+      if (i == 31 && j == 32) // XXXX
+          x = 0.0;
 
 #if defined(USE_PTHREADS) || defined(USE_PVM)
       /*
