@@ -236,8 +236,8 @@ void createFilledLeaf(VertArray *verts,
     }
 }
 
-Vec3 bboxCenter(BBOX *bbox) {
-    Vec3 C;
+POINT3 bboxCenter(BBOX *bbox) {
+    POINT3 C;
     C.x = (bbox->min.x + bbox->max.x)/2;
     C.y = (bbox->min.y + bbox->max.y)/2;
     C.z = (bbox->min.z + bbox->max.z)/2;
@@ -262,7 +262,7 @@ static
 void subdivide(OctreeNode *node, int level, int maxLevel,
         BBOX *bbox, IndexBox *iBox, GridHashTable *hashTable,
         VertArray *verts, float sigma, float radius) {
-    Vec3 C = bboxCenter(bbox);
+    POINT3 C = bboxCenter(bbox);
     double X[3] = {bbox->min.x, C.x, bbox->max.x};
     double Y[3] = {bbox->min.y, C.y, bbox->max.y};
     double Z[3] = {bbox->min.z, C.z, bbox->max.z};
@@ -389,9 +389,11 @@ Octree *createOctree(VertArray *pointCloud,
         float sigma, float radius) {
     Octree *octree = (Octree*) malloc(sizeof(Octree));
     octree->maxLevel = maxLevel;
-    getBoundingBox(&octree->bbox, pointCloud);
-    inflateBoundingBox(&octree->bbox, 0.01);
-    cubeBoundingBox(&octree->bbox);
+//    getBoundingBox(&octree->bbox, pointCloud);
+//    inflateBoundingBox(&octree->bbox, 0.01);
+//    cubeBoundingBox(&octree->bbox);
+    BBOX unitbbox = {{-1,-1,-1}, {1,1,1}}; // XXX
+    octree->bbox =  unitbbox; // XXX
     setIndexBox(&octree->indexBox, maxLevel);
     octree->gridHashTable = createGridHashTable(10003);
     octree->root = (OctreeNode*) malloc(sizeof(OctreeNode));
@@ -401,6 +403,27 @@ Octree *createOctree(VertArray *pointCloud,
             octree->gridHashTable, pointCloud, 
             sigma, radius);
     return octree;
+}
+
+//
+// In order for a leaf to actually contain a surface point then
+// then the must be a change in sign of the sign distance field
+// somewhere inside the leaf's cube. If the corner values are
+// all negative or all positive, then there is no intersection.
+//
+bool doesFilledLeaveContainSurface(IndexBox *ibox, GridHashTable *hashTable) {
+    int negCount = 0, posCount = 0;
+    for (int k = 0; k < 2; k++)
+        for (int j = 0; j < 2; j++)
+            for (int i = 0; i < 2; i++) {
+                GridData *g = gridDataLookup(hashTable, // assume filled leaf
+                                     ibox->min.i+i, ibox->min.j+j, ibox->min.k+k);
+                assert(g != NULL);
+                double f = g->f;
+                if (f < -0.0001) negCount++;
+                if (f > +0.0001) posCount++;
+            }
+    return negCount > 0 && posCount > 0;
 }
 
 //
@@ -610,6 +633,50 @@ double cubicRootFinder(double C[4], double tin, double tout) {
     return thit;
 }
 
+bool findFilledLeafContainingPoint(double point[3],
+                             OctreeNode *node, BBOX *bbox, IndexBox *ibox,
+                             Index *indexOfPoint) {
+    const bool insideBBox =
+        bbox->min.x <= point[0] && point[0] < bbox->max.x &&
+        bbox->min.y <= point[1] && point[1] < bbox->max.y &&
+        bbox->min.z <= point[2] && point[2] < bbox->max.z;
+    
+    if (!insideBBox) return false;
+    
+    if (node->child == NULL) { // filled leaf
+        return true;
+    } else { // internal node (search child octrees)
+        POINT3 C = bboxCenter(bbox);
+        double X[3] = {bbox->min.x, C.x, bbox->max.x};
+        double Y[3] = {bbox->min.y, C.y, bbox->max.y};
+        double Z[3] = {bbox->min.z, C.z, bbox->max.z};
+        
+        Index centerIndex = IndexBoxCenter(ibox);
+        int I[3] = {ibox->min.i, centerIndex.i, ibox->max.i};
+        int J[3] = {ibox->min.j, centerIndex.j, ibox->max.j};
+        int K[3] = {ibox->min.k, centerIndex.k, ibox->max.k};
+        
+        int n = 0;
+        
+        for (int k = 0; k < 2; k++) {
+            for (int j = 0; j < 2; j++) {
+                for (int i = 0; i < 2; i++) {
+                    if (node->child[n] != NULL) {
+                        BBOX cbox = {{X[i], Y[j], Z[k]}, {X[i+1], Y[j+1], Z[k+1]}};
+                        IndexBox ibox = {{I[i], J[j], K[k]}, {I[i+1], J[j+1], K[k+1]}};
+                        if (findFilledLeafContainingPoint(point, node->child[n],
+                                                    &cbox, &ibox, indexOfPoint)) {
+                            return true;
+                        }
+                    }
+                    n++;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 typedef struct {    // Child ray intersection info
     double t[2];    // entry / exit ray parameter
     int n;          // octree index
@@ -637,7 +704,8 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
     double thit = -1.0;
 
     if (node->child == NULL) {  // filled leaf
-        thit = tinterval[0]; // XXXX
+        if (doesFilledLeaveContainSurface(ibox, hashTable))
+            thit = tinterval[0]; // XXXX
 //        double C[4];
 //        rayCubicTrilinearInterpolater(rayOrg, rayDir,
 //            bbox, ibox, hashTable, C);
@@ -646,7 +714,7 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
             *hitIndex = ibox->min;
         }
     } else { // internal node
-        Vec3 C = bboxCenter(bbox);
+        POINT3 C = bboxCenter(bbox);
         double X[3] = {bbox->min.x, C.x, bbox->max.x};
         double Y[3] = {bbox->min.y, C.y, bbox->max.y};
         double Z[3] = {bbox->min.z, C.z, bbox->max.z};
@@ -661,8 +729,6 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
         int numChildren = 0;
         ChildInfo childInfo[8];
 
-        int childIntersections = 0;
-        
         for (int k = 0; k < 2; k++) {
             for (int j = 0; j < 2; j++) {
                 for (int i = 0; i < 2; i++) {
@@ -671,7 +737,6 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
                         BBOX cbox = {{X[i], Y[j], Z[k]}, {X[i+1], Y[j+1], Z[k+1]}};
                         double tchild[2];
                         if (rayHitsBoundingBox(&cbox, rayOrg, rayDir, tchild)) {
-                            childIntersections++;
                             assert(tchild[0] >= 0.0);
                             if (tchild[0] <= tinterval[1] && tchild[1] >= tinterval[0]) {
                                 ChildInfo cinfo = {
@@ -690,25 +755,12 @@ double rayIntersection(double rayOrg[3], double rayDir[3],
             }
         }
         
-        // XXX assert(childIntersections > 0);
-        // XXX assert(numChildren > 0);
-        if (childIntersections <= 0) {
-            printf("rayOrg = (%f, %f, %f)\n", rayOrg[0], rayOrg[1], rayOrg[2]);
-            printf("rayDir = (%f, %f, %f)\n", rayOrg[0], rayOrg[1], rayOrg[2]);
-            double hitEntry[3], hitExit[3];
-            for (int i = 0; i < 3; i++) {
-                hitEntry[i] = rayOrg[i] + tinterval[0]*rayDir[i];
-                hitExit[i] = rayOrg[i] + tinterval[1]*rayDir[i];
-            }
-            printf("hitEntry = (%f, %f, %f) t=%f\n",
-                   hitEntry[0], hitEntry[1], hitEntry[2], tinterval[0]);
-            printf("hitExit = (%f, %f, %f) t=%f\n",
-                   hitExit[0], hitExit[1], hitExit[2], tinterval[1]);
-            printf("bbox.min = (%f, %f, %f)\n", bbox->min.x, bbox->min.y, bbox->min.z);
-            printf("bbox.max = (%f, %f, %f)\n", bbox->max.x, bbox->max.y, bbox->max.z);
-            // XXX assert(childIntersections > 0);
-        }
-        
+        //
+        // If we hit at least one non-empty octree child, then
+        // we sort octree children by their closest ray bbox
+        // entry point (i.e., minimum t0)
+        // and recurse on each in that order.
+        //
         if (numChildren > 0) {
             ChildInfo *childInfoPtr[8];
             for (int i = 0; i < numChildren; i++)
@@ -881,7 +933,7 @@ void getNormal(struct OBJECT *this,
         for (int j = 0; j < 2; j++)
             for (int i = 0; i < 2; i++) {
                 GridData *g = gridDataLookup(hashTable,
-                                index.i,index.j,index.k);
+                                index.i+i, index.j+j, index.k+k);
                 assert(g != NULL);
                 const double w = U[i]*V[j]*W[k];
                 for (int d = 0; d < 3; d++)
@@ -931,7 +983,7 @@ void getColor(struct OBJECT *this,
         for (int j = 0; j < 2; j++)
             for (int i = 0; i < 2; i++) {
                 GridData *g = gridDataLookup(hashTable,
-                                index.i,index.j,index.k);
+                                index.i+i, index.j+j, index.k+k);
                 assert(g != NULL);
                 const double w = U[i]*V[j]*W[k];
                 for (int d = 0; d < 3; d++)

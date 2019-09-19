@@ -52,7 +52,10 @@ void traceray(double rayOrg[3],      /* ray origin */
   
   /*
    * Find the first object the given ray intersects.
+   * hitInfo.hitFound lets the rayHit method below know
+   * if this is this is a shadow ray or intersection ray.
    */
+  hitInfo.hitFound = 0;
   for (i = 0, obj = NULL; i < numObjects; i++) {
     HIT_INFO info;
     double t = (*(objects[i]->rayHit)) (objects[i], rayOrg, rayDir, &info);
@@ -72,6 +75,8 @@ void traceray(double rayOrg[3],      /* ray origin */
     color[2] = background[2];
     return;
   }
+    
+  hitInfo.hitFound = 1;
 
   /* 
    * Compute hit point and normal to surface.
@@ -138,10 +143,14 @@ void traceray(double rayOrg[3],      /* ray origin */
     /*
      * Determine the light source visability at the current
      * object intersection point.
+     * We pass in hitInfo in case this is useful to detect
+     * self-shadowing (probably should create a rawShadowHist
+     * method -- some day maybe). The rayHit method can know
+     * that this is for shadow computation since hitInfo.hitFound
+     * will be 1 (it is 0 on intersection ray).
      */
     for (shadow = 1.0, j = 0; j < numObjects; j++) {
-      HIT_INFO info;
-      double t = (*objects[j]->rayHit) (objects[j], hit, lightDir, &info);
+      double t = (*objects[j]->rayHit) (objects[j], hit, lightDir, &hitInfo);
       if (objects[j] == obj && t < EPSILON) 
 	continue;  /* bogus self-occlusion */
       if (t > 0.0 && t < lightDist) {
@@ -375,7 +384,9 @@ raytrace(
       double x,y;
       double sumColor[3];
 
-      if (i == 31 && j == 32) // XXXX
+      if (i == 40 && j == 32) // XXXX
+          x = 0.0;
+      if (i == 50 && j == 50) // XXXX
           x = 0.0;
 
 #if defined(USE_PTHREADS) || defined(USE_PVM)
