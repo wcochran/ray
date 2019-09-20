@@ -1,0 +1,34 @@
+#
+# Basketball Studio Data
+#
+# bbox min = (-3.993504524, -0.1466400772, 9.887814522)
+# bbox max = (33.94832611, 19.91929245, 21.64734268)
+#
+
+LOOKAT = (14.977410793000002, 9.8863261864, 64.72080016688201), # eye
+         (14.977410793000002, 9.8863261864, 15.767578601), # lookat
+         (0,1,0)  # up
+
+
+PROJECTION = 40, 1                        # fovy, aspect
+#IMAGE = "bball.ppm", 64, 64, 1          # name, w, h, sqrt(samples/pixel)
+#IMAGE = "bball.ppm", 512, 512, 1          # name, w, h, sqrt(samples/pixel)
+IMAGE = "bball.ppm", 1024, 1024, 1          # name, w, h, sqrt(samples/pixel)
+RECURSEDEPTH = 1                          # recursion depth
+AMBIENT = (0.5, 0.5, 0.5)                 # ambient light in scene
+#BACKGROUND = (0, 0.1, 0.6)                # background color
+BACKGROUND = (0, 0, 0)                # background color
+#LIGHT = (10, 10, 10), (1, 1, 1), 1, 0, 0  # position, color, attenuation
+LIGHT = (15, 10, 65), (1, 1, 1), 1, 0, 0  # position, color, attenuation
+KA = 0.4                                  # material ambient reflection coeff
+KD = 0.6                                  # material diffuse reflection coeff
+KS = 0.0                                  # material specular reflection coeff
+KT = 0.0                                  # material transmission coeff
+NI = 1.52                                 # material index of refraction
+PHONG = 10                                # material shininess
+MAXLEVEL = 9
+#SIGMA = 0.18
+#SIGMA = 0.19
+SIGMA = 0.23
+POINTCLOUD="point-cloud/bball.ply", MAXLEVEL, SIGMA
+#POINTCLOUD="point-cloud/bball12.ply", MAXLEVEL, SIGMA

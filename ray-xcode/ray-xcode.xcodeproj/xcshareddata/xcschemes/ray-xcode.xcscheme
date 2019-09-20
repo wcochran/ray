@@ -65,6 +65,10 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "point-cloud/bunny.in"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "point-cloud/bball.in"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

@@ -10,7 +10,7 @@
 
 typedef struct GridData {
     struct GridData *next;   // link to next bucket in hash tbl
-    uint8_t i,j,k;           // grid indix
+    uint16_t i,j,k;           // grid indix
     uint8_t color[3];        // RGB (8-bit fixed pt)
     float f;                 // signed distance function val
     float normal[3];         // surface normal
@@ -36,8 +36,20 @@ GridHashTable *createGridHashTable(int size) {
 #define HASH3(i,j,k) HASH2(HASH2(i,j),k)
 
 static
+int hash2(int i, int j, int M) {
+    return ((i + j)*(i + j + 1)/2 + j) % M;
+}
+
+static
+int hash3(int i, int j, int k, int M) {
+    const int t = hash2(i,j, M);
+    return hash2(t,k, M);
+}
+
+static
 GridData *gridDataLookup(GridHashTable *hashTable, int i, int j, int k) {
-    const int index = HASH3(i,j,k) % hashTable->numElems;
+    // XXX const int index = HASH3(i,j,k) % hashTable->numElems;
+    const int index = hash3(i,j,k,hashTable->numElems);
     GridData *n = hashTable->table[index];
     while (n != NULL && (n->i != i || n->j != j || n->k != k))
         n = n->next;
@@ -48,7 +60,8 @@ GridData *gridDataLookup(GridHashTable *hashTable, int i, int j, int k) {
 static
 GridData *gridDataInsert(GridHashTable *hashTable, GridData *gridData) { 
     const int i = gridData->i, j = gridData->j, k = gridData->k;
-    const int index = HASH3(i,j,k) % hashTable->numElems;
+    // XXX const int index = HASH3(i,j,k) % hashTable->numElems;
+    const int index = hash3(i,j,k,hashTable->numElems);
     GridData *n = hashTable->table[index];
     gridData->next = n;
     hashTable->table[index] = gridData;
@@ -226,9 +239,9 @@ void createFilledLeaf(VertArray *verts,
                     gridData->normal[0] = (float) N.x;
                     gridData->normal[1] = (float) N.y;
                     gridData->normal[2] = (float) N.z;
-                    gridData->i = (uint8_t) I;
-                    gridData->j = (uint8_t) J;
-                    gridData->k = (uint8_t) K;
+                    gridData->i = I;
+                    gridData->j = J;
+                    gridData->k = K;
                     gridDataInsert(hashTable, gridData);
                 }
             }
@@ -965,6 +978,10 @@ void getColor(struct OBJECT *this,
             double hitPoint[3],
             HIT_INFO *info,  
             double color[3]) {
+// XXX #define ALL_WHITE_SURFACE_XXX
+#ifdef ALL_WHITE_SURFACE_XXX
+    color[0] = color[1] = color[1] = 1.0;
+#else
    POINTCLOUD_DATA *data = (POINTCLOUD_DATA*) this->data;
     Octree *octree = data->octree;
     GridHashTable *hashTable = octree->gridHashTable;
@@ -999,6 +1016,7 @@ void getColor(struct OBJECT *this,
                 for (int d = 0; d < 3; d++)
                     color[d] += w*g->color[d]/255.0; // convert from 8-bit
             }
+#endif
 }
 
 static
