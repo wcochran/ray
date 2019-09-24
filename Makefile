@@ -1,6 +1,6 @@
 CC=gcc
-COPTS=-g -Wall -DVERBOSE
-#COPTS=-O3
+#COPTS=-g -Wall -DVERBOSE
+COPTS=-O3
 YACC=yacc
 #YACCOPTS=-t -v
 YACCOPTS=

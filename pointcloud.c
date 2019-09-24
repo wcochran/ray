@@ -978,7 +978,7 @@ void getColor(struct OBJECT *this,
             double hitPoint[3],
             HIT_INFO *info,  
             double color[3]) {
-// XXX #define ALL_WHITE_SURFACE_XXX
+#define ALL_WHITE_SURFACE_XXX
 #ifdef ALL_WHITE_SURFACE_XXX
     color[0] = color[1] = color[1] = 1.0;
 #else
