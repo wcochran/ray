@@ -80,9 +80,9 @@ typedef struct {
 // Helper function for computeGridSurfaceNormals
 static
 double gridSignedDistanceValue(GridHashTable *hashTable,
-        int W, int H, int D,
+        Index maxIndex,
         int i, int j, int k) {
-    if (i < 0 || i >= W || j < 0 || j >= H || k < 0 || k >= D)
+    if (i < 0 || i > maxIndex.i || j < 0 || j >= maxIndex.j || k < 0 || k >= maxIndex.k)
         return 0.0;
     GridData *data = gridDataLookup(hashTable, i,j,k);
     return data == NULL ? 0.0 : (double)data->f;
@@ -91,20 +91,20 @@ double gridSignedDistanceValue(GridHashTable *hashTable,
 // Determine and store the normal for every stored point in the grid by computing
 // the gradiant of the signed distance function using central differences.
 static
-void computeGridSurfaceNormals(GridHashTable *hashTable, int W, int H, int D) {
+void computeGridSurfaceNormals(GridHashTable *hashTable, Index maxIndex) {
     const int N = hashTable->numElems;
     for (int n = 0; n < N; n++) {
         for (GridData *elem = hashTable->table[n]; elem != NULL; elem = elem->next) {
             const int i = elem->i, j = elem->j, k = elem->k;
             const double dx = 
-                gridSignedDistanceValue(hashTable, W,H,D, i-1,j,k) -
-                gridSignedDistanceValue(hashTable, W,H,D, i+1,j,k);
+                gridSignedDistanceValue(hashTable, maxIndex, i-1,j,k) -
+                gridSignedDistanceValue(hashTable, maxIndex, i+1,j,k);
             const double dy = 
-                gridSignedDistanceValue(hashTable, W,H,D, i,j+1,k) -
-                gridSignedDistanceValue(hashTable, W,H,D, i,j-1,k);
+                gridSignedDistanceValue(hashTable, maxIndex, i,j+1,k) -
+                gridSignedDistanceValue(hashTable, maxIndex, i,j-1,k);
             const double dz = 
-                gridSignedDistanceValue(hashTable, W,H,D, i,j,k+1) -
-                gridSignedDistanceValue(hashTable, W,H,D, i,j,k-1);
+                gridSignedDistanceValue(hashTable, maxIndex, i,j,k+1) -
+                gridSignedDistanceValue(hashTable, maxIndex, i,j,k-1);
             const double mag2 = dx*dx + dy*dy + dz*dz;
             const double s = mag2 > 0 ? 1/sqrt(mag2) : 1;
             elem->normal[0] = (float)(s*dx);
@@ -523,6 +523,12 @@ Octree *createOctree(VertArray *pointCloud,
             halfThickness,
 #endif
             sigma, radius);
+
+#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+    const int S = 1 << maxLevel; // XXXX
+    computeGridSurfaceNormals(octree->gridHashTable, octree->indexBox.max);
+#endif
+
     return octree;
 }
 
