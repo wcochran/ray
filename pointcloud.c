@@ -77,6 +77,43 @@ typedef struct {
     Index max;
 } IndexBox;
 
+// Helper function for computeGridSurfaceNormals
+static
+double gridSignedDistanceValue(GridHashTable *hashTable,
+        int W, int H, int D,
+        int i, int j, int k) {
+    if (i < 0 || i >= W || j < 0 || j >= H || k < 0 || k >= D)
+        return 0.0;
+    GridData *data = gridDataLookup(hashTable, i,j,k);
+    return data == NULL ? 0.0 : (double)data->f;
+}
+
+// Determine and store the normal for every stored point in the grid by computing
+// the gradiant of the signed distance function using central differences.
+static
+void computeGridSurfaceNormals(GridHashTable *hashTable, int W, int H, int D) {
+    const int N = hashTable->numElems;
+    for (int n = 0; n < N; n++) {
+        for (GridData *elem = hashTable->table[n]; elem != NULL; elem = elem->next) {
+            const int i = elem->i, j = elem->j, k = elem->k;
+            const double dx = 
+                gridSignedDistanceValue(hashTable, W,H,D, i-1,j,k) -
+                gridSignedDistanceValue(hashTable, W,H,D, i+1,j,k);
+            const double dy = 
+                gridSignedDistanceValue(hashTable, W,H,D, i,j+1,k) -
+                gridSignedDistanceValue(hashTable, W,H,D, i,j-1,k);
+            const double dz = 
+                gridSignedDistanceValue(hashTable, W,H,D, i,j,k+1) -
+                gridSignedDistanceValue(hashTable, W,H,D, i,j,k-1);
+            const double mag2 = dx*dx + dy*dy + dz*dz;
+            const double s = mag2 > 0 ? 1/sqrt(mag2) : 1;
+            elem->normal[0] = (float)(s*dx);
+            elem->normal[1] = (float)(s*dy);
+            elem->normal[2] = (float)(s*dz);
+        }       
+    }
+}
+
 //
 // Three case for octree node
 //   node = NULL => empty leaf
@@ -165,7 +202,7 @@ VertArray *vertsInsideExpandedBBox(VertArray *inputVertArray, BBOX *bbox, double
 static
 double signedDistanceFunction(VertArray *verts, POINT3 *P, POINT3 *N, double color[3], 
         double radius, double sigma) {
-    const double r2 = radius*radius;
+        const double r2 = radius*radius;
     const double b = -1/(sigma*sigma);
     float weight = 0;
     POINT3 weightP = {0,0,0};
@@ -208,6 +245,47 @@ double signedDistanceFunction(VertArray *verts, POINT3 *P, POINT3 *N, double col
     color[2] = scale*weightColor[2];
     POINT3 D = {P->x - Pave.x, P->y - Pave.y, P->z - Pave.z};
     const double f = D.x*N->x + D.y*N->y + D.z*N->z;
+    return f;    
+}
+
+//
+// Find weighted average distance of P from the planes defined by verts
+// and if the distance is less than / equal to / greater than the given
+// "half thikcness" then the signed distance is negative / zero / positive.
+// Normals will have to be calculate later by gradient computation on
+// grid of signed distance function.
+//
+static
+double thicknessSignedDistanceFunction(VertArray *verts, POINT3 *P,
+        double halfThickness, double color[3], double radius, double sigma) {
+    const double r2 = radius*radius;
+    const double b = -1/(sigma*sigma);
+    float weight = 0;
+    double weightD = 0;  // weighted distance from planes
+    double weightColor[3] = {0,0,0};
+    int n = 0;
+    for (int i = 0; i < verts->num; i++) {
+        Vert *vert = &verts->verts[i];
+        POINT3 d = {vert->pos.x - P->x, vert->pos.y - P->y, vert->pos.z - P->z};
+        const double d2 = d.x*d.x + d.y*d.y + d.z*d.z;
+        if (d2 < r2) {
+            const double D = fabs(d.x*vert->normal.x + d.y*vert->normal.y + d.z*vert->normal.z);
+            const double w = exp(b*d2);
+            weight += w;
+            weightD += w*D;
+            weightColor[0] += w*vert->color.r;
+            weightColor[1] += w*vert->color.g;
+            weightColor[2] += w*vert->color.b;
+            n++;
+        }
+    }
+    const double scale = weight > 0 ? 1/weight : 1;
+    const double Dave = scale*weightD;
+    color[0] = scale*weightColor[0];
+    color[1] = scale*weightColor[1];
+    color[2] = scale*weightColor[2];
+    const double u = Dave / halfThickness;
+    const double f = u*u - 1; // u <=> 1 yields f <=> 0; 
     return f;
 }
 
@@ -215,6 +293,9 @@ static
 void createFilledLeaf(VertArray *verts, 
         BBOX *bbox, IndexBox *indexBox, 
         float radius, float sigma, 
+#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+        float halfThickness,
+#endif
         GridHashTable *hashTable) {
     for (int k = 0; k < 2; k++) {
         const double z = (k == 0) ? bbox->min.z : bbox->max.z;
@@ -229,16 +310,24 @@ void createFilledLeaf(VertArray *verts,
                 if (gridData == NULL) {
                     gridData = (GridData*) malloc(sizeof(GridData));
                     POINT3 P = {x, y, z};
-                    POINT3 N;
+
                     double color[3];
+#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+                    const double f = thicknessSignedDistanceFunction(verts, &P, halfThickness, color,
+                            radius, sigma);
+#else                    
+                    POINT3 N;
                     const double f = signedDistanceFunction(verts, &P, &N, color, 
                                         radius, sigma);
+#endif
                     gridData->f = (float)f;
                     for (int ch = 0; ch < 3; ch++)
                         gridData->color[ch] = (uint8_t) (255*color[ch] + 0.5);
+#ifndef THIKCNESS_SIGNED_DISTANCE_FUNCTION
                     gridData->normal[0] = (float) N.x;
                     gridData->normal[1] = (float) N.y;
                     gridData->normal[2] = (float) N.z;
+#endif
                     gridData->i = I;
                     gridData->j = J;
                     gridData->k = K;
@@ -274,7 +363,11 @@ BBOX createBoundingBox(double xmin, double ymin, double zmin,
 static
 void subdivide(OctreeNode *node, int level, int maxLevel,
         BBOX *bbox, IndexBox *iBox, GridHashTable *hashTable,
-        VertArray *verts, float sigma, float radius) {
+        VertArray *verts, 
+#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+        float halfThickness,
+#endif
+        float sigma, float radius) {
     POINT3 C = bboxCenter(bbox);
     double X[3] = {bbox->min.x, C.x, bbox->max.x};
     double Y[3] = {bbox->min.y, C.y, bbox->max.y};
@@ -325,13 +418,22 @@ void subdivide(OctreeNode *node, int level, int maxLevel,
                 } else if (level >= maxLevel) {
                     node->child[n] = (OctreeNode*) malloc(sizeof(OctreeNode));
                     node->child[n]->child = NULL; // filled leaf
+#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+                    createFilledLeaf(childVerts, &childBBox, &childIndexBox, 
+                            radius, sigma, halfThickness, hashTable);
+#else
                     createFilledLeaf(childVerts, &childBBox, &childIndexBox, 
                             radius, sigma, hashTable);
+#endif
                 } else { // internal node;
                     node->child[n] = (OctreeNode*) malloc(sizeof(OctreeNode));
                     subdivide(node->child[n], level + 1, maxLevel,
                         &childBBox, &childIndexBox, hashTable, childVerts,
-                        radius, sigma);
+                        radius, 
+#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+                        halfThickness,
+#endif
+                        sigma);
                 }
 
                 if (childVerts != NULL)
@@ -399,6 +501,9 @@ void cubeBoundingBox(BBOX *bbox) {
 static
 Octree *createOctree(VertArray *pointCloud, 
         int maxLevel,
+#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+        float halfThickness,
+#endif       
         float sigma, float radius) {
     Octree *octree = (Octree*) malloc(sizeof(Octree));
     octree->maxLevel = maxLevel;
@@ -413,7 +518,10 @@ Octree *createOctree(VertArray *pointCloud,
     octree->root->child = NULL;
     subdivide(octree->root, 1, maxLevel,
             &octree->bbox, &octree->indexBox,
-            octree->gridHashTable, pointCloud, 
+            octree->gridHashTable, pointCloud,
+#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+            halfThickness,
+#endif
             sigma, radius);
     return octree;
 }
@@ -1086,7 +1194,11 @@ void setColor(OBJECT *this, double color[3]) {
 //    }
 //}
 
-OBJECT *createPointCloudObject(const char *plyfile, int maxLevel, float sigma) {
+OBJECT *createPointCloudObject(const char *plyfile, int maxLevel, 
+ #ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+        float halfThickness,
+#endif   
+        float sigma) {
     VertArray *pointcloud = readPLY(plyfile);
     if (pointcloud == NULL) return NULL;
     float radius = 2.5*sigma;

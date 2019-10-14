@@ -86,7 +86,7 @@ void makeHermiteRis(int M, int N, int Sx, int Sy, double x0, double y0,
                     Matrix *z, Matrix *zx, Matrix *zy, Matrix *zxy);
 void makeSuperellipsoid(double n, double m, 
 			double size[3], double z[3], double x[3], double center[3]);
-void makePointCloud(const char *fname, double maxLevel, double sigma);
+void makePointCloud(const char *fname, double maxLevel, double sigma, double halfThickness);
 #ifdef YYDEBUG
 int yydebug=1;
 #endif
@@ -308,8 +308,8 @@ object     : SPHERE '=' vec ',' expr    {makeSphere($3, $5);}
            | SUPERELLIPSOID '=' expr ',' expr ',' vec ',' vec ',' vec ',' vec
                                         {makeSuperellipsoid($3,$5,$7,$9,$11,$13);}
 
-           | POINTCLOUD '=' STR ',' expr ',' expr
-                   {makePointCloud($3, $5, $7);}
+           | POINTCLOUD '=' STR ',' expr ',' expr ',' expr
+                   {makePointCloud($3, $5, $7, $9);}
            ;
 %%
 
@@ -938,18 +938,18 @@ void makeSuperellipsoid(double n, double m,
   objects[numObjects++] = object;
 }
 
-void makePointCloud(const char *fname, double maxLevel, double sigma) {
+void makePointCloud(const char *fname, double maxLevel, double sigma, double halfThickness) {
   OBJECT *object;
 
 #ifdef VERBOSE
-  printf("makePointCloud(%s,%f,%f)\n", 
-	 fname, maxLevel, sigma);
+  printf("makePointCloud(%s,%f,%f,%f)\n", 
+	 fname, maxLevel, sigma, halfThickness);
 #endif
 
   if (numObjects >= MAX_OBJECTS)
     fatalError("Too friggin many objects!");
 
-  object = createPointCloudObject(fname, (int) maxLevel, (float) sigma);
+  object = createPointCloudObject(fname, (int) maxLevel, (float) sigma, (float) halfThickness);
   object = setMaterial(object);
 
   objects[numObjects++] = object;
