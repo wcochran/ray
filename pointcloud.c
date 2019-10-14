@@ -251,7 +251,7 @@ double signedDistanceFunction(VertArray *verts, POINT3 *P, POINT3 *N, double col
 //
 // Find weighted average distance of P from the planes defined by verts
 // and if the distance is less than / equal to / greater than the given
-// "half thikcness" then the signed distance is negative / zero / positive.
+// "half THICKNESS" then the signed distance is negative / zero / positive.
 // Normals will have to be calculate later by gradient computation on
 // grid of signed distance function.
 //
@@ -293,7 +293,7 @@ static
 void createFilledLeaf(VertArray *verts, 
         BBOX *bbox, IndexBox *indexBox, 
         float radius, float sigma, 
-#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+#ifdef THICKNESS_SIGNED_DISTANCE_FUNCTION
         float halfThickness,
 #endif
         GridHashTable *hashTable) {
@@ -312,7 +312,7 @@ void createFilledLeaf(VertArray *verts,
                     POINT3 P = {x, y, z};
 
                     double color[3];
-#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+#ifdef THICKNESS_SIGNED_DISTANCE_FUNCTION
                     const double f = thicknessSignedDistanceFunction(verts, &P, halfThickness, color,
                             radius, sigma);
 #else                    
@@ -323,7 +323,7 @@ void createFilledLeaf(VertArray *verts,
                     gridData->f = (float)f;
                     for (int ch = 0; ch < 3; ch++)
                         gridData->color[ch] = (uint8_t) (255*color[ch] + 0.5);
-#ifndef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+#ifndef THICKNESS_SIGNED_DISTANCE_FUNCTION
                     gridData->normal[0] = (float) N.x;
                     gridData->normal[1] = (float) N.y;
                     gridData->normal[2] = (float) N.z;
@@ -364,7 +364,7 @@ static
 void subdivide(OctreeNode *node, int level, int maxLevel,
         BBOX *bbox, IndexBox *iBox, GridHashTable *hashTable,
         VertArray *verts, 
-#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+#ifdef THICKNESS_SIGNED_DISTANCE_FUNCTION
         float halfThickness,
 #endif
         float sigma, float radius) {
@@ -418,7 +418,7 @@ void subdivide(OctreeNode *node, int level, int maxLevel,
                 } else if (level >= maxLevel) {
                     node->child[n] = (OctreeNode*) malloc(sizeof(OctreeNode));
                     node->child[n]->child = NULL; // filled leaf
-#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+#ifdef THICKNESS_SIGNED_DISTANCE_FUNCTION
                     createFilledLeaf(childVerts, &childBBox, &childIndexBox, 
                             radius, sigma, halfThickness, hashTable);
 #else
@@ -429,10 +429,10 @@ void subdivide(OctreeNode *node, int level, int maxLevel,
                     node->child[n] = (OctreeNode*) malloc(sizeof(OctreeNode));
                     subdivide(node->child[n], level + 1, maxLevel,
                         &childBBox, &childIndexBox, hashTable, childVerts,
-                        radius, 
-#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+#ifdef THICKNESS_SIGNED_DISTANCE_FUNCTION
                         halfThickness,
-#endif
+#endif                      
+                         radius, 
                         sigma);
                 }
 
@@ -501,7 +501,7 @@ void cubeBoundingBox(BBOX *bbox) {
 static
 Octree *createOctree(VertArray *pointCloud, 
         int maxLevel,
-#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+#ifdef THICKNESS_SIGNED_DISTANCE_FUNCTION
         float halfThickness,
 #endif       
         float sigma, float radius) {
@@ -519,12 +519,12 @@ Octree *createOctree(VertArray *pointCloud,
     subdivide(octree->root, 1, maxLevel,
             &octree->bbox, &octree->indexBox,
             octree->gridHashTable, pointCloud,
-#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+#ifdef THICKNESS_SIGNED_DISTANCE_FUNCTION
             halfThickness,
 #endif
             sigma, radius);
 
-#ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+#ifdef THICKNESS_SIGNED_DISTANCE_FUNCTION
     const int S = 1 << maxLevel; // XXXX
     computeGridSurfaceNormals(octree->gridHashTable, octree->indexBox.max);
 #endif
@@ -1201,7 +1201,7 @@ void setColor(OBJECT *this, double color[3]) {
 //}
 
 OBJECT *createPointCloudObject(const char *plyfile, int maxLevel, 
- #ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+ #ifdef THICKNESS_SIGNED_DISTANCE_FUNCTION
         float halfThickness,
 #endif   
         float sigma) {

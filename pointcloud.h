@@ -3,10 +3,10 @@
 
 #include "raytrace.h"
 
-#define THIKCNESS_SIGNED_DISTANCE_FUNCTION
+#define THICKNESS_SIGNED_DISTANCE_FUNCTION
 
 OBJECT *createPointCloudObject(const char *plyfile, int maxLevel, 
- #ifdef THIKCNESS_SIGNED_DISTANCE_FUNCTION
+ #ifdef THICKNESS_SIGNED_DISTANCE_FUNCTION
         float halfThickness,
 #endif   
         float sigma);
